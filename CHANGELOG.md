@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Controllers use `ISiteSettingService` + `IWebhookDelegateService` instead of generic `IPwebSettingService`
   - `QuickPickService` refactored to use dedicated repositories instead of loading all settings and filtering by key prefix
   - Significant query performance improvement: full table scans replaced with indexed lookups
+- **EF Core migrations for PoracleWeb database**: Replace `EnsureCreated()` with proper EF Core migrations. Schema changes apply automatically on startup via `MigrateAsync()`. Includes `MariaDbHistoryRepository` to fix `GET_LOCK(-1)` incompatibility with MariaDB. ([PR #35](https://github.com/PGAN-Dev/PoracleWeb.NET/pull/35))
 
 ### Deprecated
 - **`pweb_settings` table** — The old key-value table in the Poracle DB is no longer written to. Data is automatically migrated to the new structured tables on first startup. The old `IPwebSettingService` and `PwebSettingEntity` remain registered for the migration service but should not be used for new code.

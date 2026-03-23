@@ -141,7 +141,10 @@ Pgan.PoracleWebNet.slnx
   - `webhook_delegates` -- relational user-to-webhook delegation mappings with composite unique constraint.
   - `quick_pick_definitions` -- structured quick pick alarm presets (global and user-scoped) with JSON filter columns.
   - `quick_pick_applied_states` -- tracks which quick picks users have applied per profile, with tracked alarm UIDs.
-- Uses EF Core `EnsureCreated()` or migrations for schema management.
+- Schema managed via **EF Core migrations** (`Database.MigrateAsync()` on startup). New tables are created automatically.
+- `MariaDbHistoryRepository` overrides the default MySQL migration lock to use `GET_LOCK(3600)` instead of `GET_LOCK(-1)`, working around a `MySql.EntityFrameworkCore` bug where MariaDB returns NULL for infinite-timeout locks.
+- Design-time factory (`PoracleWebContextDesignTimeFactory`) enables `dotnet ef migrations add` without a running app.
+- Migrations are stored in `Data/Pgan.PoracleWebNet.Data/Migrations/PoracleWeb/`.
 
 ### Profiles
 - `humans.current_profile_no` (not `profile_no`) tracks the active profile.
@@ -227,6 +230,9 @@ Koji's `displayInMatches` custom property is not reliably honored by all Poracle
 ### Settings Migration
 On first startup after upgrade, the `SettingsMigrationStartupService` automatically migrates data from the deprecated `pweb_settings` KV store (in the Poracle DB) to structured tables in the `poracle_web` database (`site_settings`, `webhook_delegates`, `quick_pick_definitions`, `quick_pick_applied_states`). This is idempotent -- safe to run multiple times. If migration fails, the app continues with existing data and logs the error. The old `pweb_settings` table is not deleted; it remains read-only as a fallback until fully decommissioned.
 
+### MariaDB GET_LOCK Compatibility
+`MySql.EntityFrameworkCore`'s `MigrateAsync()` uses `GET_LOCK('__EFMigrationsLock', -1)` which returns NULL on MariaDB (infinite timeout not supported), causing `System.InvalidCastException`. The `MariaDbHistoryRepository` class overrides the lock acquisition to use `GET_LOCK(3600)` instead. This is registered via `ReplaceService<IHistoryRepository, MariaDbHistoryRepository>()` on `PoracleWebContext`.
+
 ## Build & Run
 
 ```bash
@@ -265,7 +271,55 @@ docker compose up -d
 # Docker — force clean rebuild
 docker build --no-cache -t poracleweb.net:latest .
 docker compose up -d --force-recreate
+
+# EF Core Migrations — add a new migration after model changes
+dotnet ef migrations add <MigrationName> \
+  --context PoracleWebContext \
+  --project Data/Pgan.PoracleWebNet.Data \
+  --startup-project Applications/Pgan.PoracleWebNet.Api \
+  --output-dir Migrations/PoracleWeb
+
+# EF Core Migrations — generate SQL script (for review)
+dotnet ef migrations script \
+  --context PoracleWebContext \
+  --project Data/Pgan.PoracleWebNet.Data \
+  --startup-project Applications/Pgan.PoracleWebNet.Api
 ```
+
+## Development Setup
+
+1. **Clone the repo** and copy `.env.example` to `.env`, fill in database credentials and Discord/Telegram secrets.
+2. **Create the `poracle_web` database** in MariaDB/MySQL (empty — tables are created automatically):
+   ```sql
+   CREATE DATABASE poracle_web CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
+   ```
+3. **Configure connection strings** in `appsettings.Development.json` (gitignored):
+   - `ConnectionStrings:PoracleDb` — the Poracle database (managed by PoracleJS)
+   - `ConnectionStrings:PoracleWebDb` — the `poracle_web` database (owned by this app)
+4. **Run the app** — `dotnet run` from `Applications/Pgan.PoracleWebNet.Api`. On first startup:
+   - `MigrateAsync()` applies all pending EF Core migrations, creating the `poracle_web` tables
+   - `SettingsMigrationStartupService` migrates data from the old `pweb_settings` table (if any exists)
+5. **Run the Angular dev server** — `npm start` from `ClientApp/` (proxies API calls to the .NET backend)
+
+### Adding new PoracleWeb tables
+1. Add the entity class to `Data/Pgan.PoracleWebNet.Data/Entities/`
+2. Add a `DbSet<>` to `PoracleWebContext`
+3. Optionally add an `IEntityTypeConfiguration<>` in `Data/Configurations/`
+4. Create a migration: `dotnet ef migrations add <Name> --context PoracleWebContext --project Data/Pgan.PoracleWebNet.Data --startup-project Applications/Pgan.PoracleWebNet.Api --output-dir Migrations/PoracleWeb`
+5. The migration applies automatically on next app startup via `MigrateAsync()`
+
+## Production Setup (Docker)
+
+1. **Build the image**: `docker build -t poracleweb.net:latest .`
+2. **Configure `.env`** with production values (DB hosts, secrets, Koji API, Discord bot token)
+3. **Ensure the `poracle_web` database exists** in MariaDB/MySQL (tables are created automatically on startup)
+4. **Start**: `docker compose up -d`
+5. **On first start**, the app will:
+   - Run EF Core migrations to create all `poracle_web` tables
+   - Migrate settings data from `pweb_settings` (Poracle DB) to the new structured tables
+6. **Subsequent starts** skip both steps (migrations already applied, sentinel key set)
+7. **Updates**: `docker build -t poracleweb.net:latest . && docker compose up -d --force-recreate`
+   - New migrations (if any) apply automatically on startup
 
 ## Code Style
 
@@ -287,6 +341,9 @@ docker compose up -d --force-recreate
 | Quick Pick Applied State Entity | `Data/Pgan.PoracleWebNet.Data/Entities/QuickPickAppliedStateEntity.cs` |
 | PwebSetting Entity (deprecated) | `Data/Pgan.PoracleWebNet.Data/Entities/PwebSettingEntity.cs` |
 | Entity Configurations | `Data/Pgan.PoracleWebNet.Data/Configurations/` |
+| MariaDb History Repository | `Data/Pgan.PoracleWebNet.Data/MariaDbHistoryRepository.cs` |
+| Design-Time Context Factory | `Data/Pgan.PoracleWebNet.Data/PoracleWebContextDesignTimeFactory.cs` |
+| EF Core Migrations (PoracleWeb) | `Data/Pgan.PoracleWebNet.Data/Migrations/PoracleWeb/` |
 | API Controllers | `Applications/Pgan.PoracleWebNet.Api/Controllers/` |
 | Geofence Feed Controller | `Applications/Pgan.PoracleWebNet.Api/Controllers/GeofenceFeedController.cs` |
 | Admin Geofence Controller | `Applications/Pgan.PoracleWebNet.Api/Controllers/AdminGeofenceController.cs` |
@@ -332,5 +389,5 @@ docker compose up -d --force-recreate
 ## Testing
 
 - **Frontend**: Jest with jest-preset-angular. Run with `npm test` from `ClientApp/`. Tests cover services, pipes, components, dialogs, and utilities (including `geo.utils.spec.ts`, `user-geofence.service.spec.ts`, `admin-geofence.service.spec.ts`, `region-selector.component.spec.ts`, `geofence-name-dialog.component.spec.ts`, `geofence-approval-dialog.component.spec.ts`).
-- **Backend**: xUnit with Moq. Run with `dotnet test` from solution root. Tests cover controllers, services, and AutoMapper mappings (including `UserGeofenceControllerTests`, `AdminGeofenceControllerTests`, `GeofenceFeedControllerTests`, `UserGeofenceServiceTests`, `SettingsControllerTests`, `AdminControllerTests`, `PwebSettingServiceTests`, `QuickPickServiceSecurityTests`).
+- **Backend**: xUnit with Moq. Run with `dotnet test` from solution root. Tests cover controllers, services, and AutoMapper mappings (including `UserGeofenceControllerTests`, `AdminGeofenceControllerTests`, `GeofenceFeedControllerTests`, `UserGeofenceServiceTests`, `SettingsControllerTests`, `AdminControllerTests`, `PwebSettingServiceTests`, `QuickPickServiceSecurityTests`, `SiteSettingServiceTests`, `WebhookDelegateServiceTests`, `SettingsMigrationServiceTests`).
 - **CI**: Both test suites run automatically on push/PR to main via GitHub Actions.
