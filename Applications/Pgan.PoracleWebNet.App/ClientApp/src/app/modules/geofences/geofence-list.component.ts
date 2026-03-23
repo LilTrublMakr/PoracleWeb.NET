@@ -174,10 +174,7 @@ export class GeofenceListComponent implements OnInit {
                 next: created => {
                   this.savingGeofence.set(false);
                   this.customGeofences.update(list => [...list.filter(g => g.id !== geofence.id), created]);
-                  this.activeAreas.update(areas => [
-                    ...areas.filter(a => a !== geofence.kojiName),
-                    created.kojiName,
-                  ]);
+                  this.activeAreas.update(areas => [...areas.filter(a => a !== geofence.kojiName), created.kojiName]);
                   this.snackBar.open('Geofence updated', 'OK', { duration: 3000 });
                 },
               });
