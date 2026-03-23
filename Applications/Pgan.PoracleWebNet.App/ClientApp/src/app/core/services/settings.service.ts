@@ -70,9 +70,9 @@ export class SettingsService {
 
   update(key: string, value: string, category?: string): Observable<AnySettingItem> {
     return this.http.put<AnySettingItem>(`${this.config.apiHost}/api/settings/${encodeURIComponent(key)}`, {
+      category,
       key,
       value,
-      category,
     });
   }
 }

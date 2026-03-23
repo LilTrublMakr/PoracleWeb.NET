@@ -78,7 +78,7 @@ public class QuickPickAppliedStateRepository(PoracleWebContext context, IMapper 
         }
     }
 
-    private static QuickPickAppliedState MapToModel(QuickPickAppliedStateEntity entity) => new QuickPickAppliedState
+    private static QuickPickAppliedState MapToModel(QuickPickAppliedStateEntity entity) => new()
     {
         UserId = entity.UserId,
         ProfileNo = entity.ProfileNo,

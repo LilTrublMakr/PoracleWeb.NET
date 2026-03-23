@@ -64,8 +64,17 @@ public class SettingsController(ISiteSettingService siteSettingService) : BaseAp
 
     public class SiteSettingRequest
     {
-        public string? Value { get; set; }
-        public string? Category { get; set; }
-        public string? ValueType { get; set; }
+        public string? Value
+        {
+            get; set;
+        }
+        public string? Category
+        {
+            get; set;
+        }
+        public string? ValueType
+        {
+            get; set;
+        }
     }
 }

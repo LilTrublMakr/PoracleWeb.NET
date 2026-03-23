@@ -21,7 +21,7 @@ public class MariaDbHistoryRepository(HistoryRepositoryDependencies dependencies
 
     public override string GetCreateIfNotExistsScript() =>
         $"""
-         CREATE TABLE IF NOT EXISTS `{TableName}` (
+         CREATE TABLE IF NOT EXISTS `{this.TableName}` (
              `MigrationId` varchar(150) NOT NULL,
              `ProductVersion` varchar(32) NOT NULL,
              PRIMARY KEY (`MigrationId`)
@@ -40,13 +40,13 @@ public class MariaDbHistoryRepository(HistoryRepositoryDependencies dependencies
 
     public override IMigrationsDatabaseLock AcquireDatabaseLock()
     {
-        Dependencies.RawSqlCommandBuilder
+        this.Dependencies.RawSqlCommandBuilder
             .Build("SELECT GET_LOCK('__EFMigrationsLock', 3600);")
             .ExecuteNonQuery(
                 new RelationalCommandParameterObject(
-                    Dependencies.Connection, null, null,
-                    Dependencies.CurrentContext.Context,
-                    Dependencies.CommandLogger));
+                    this.Dependencies.Connection, null, null,
+                    this.Dependencies.CurrentContext.Context,
+                    this.Dependencies.CommandLogger));
 
         return new MariaDbMigrationsDatabaseLock(this);
     }
@@ -54,13 +54,13 @@ public class MariaDbHistoryRepository(HistoryRepositoryDependencies dependencies
     public override async Task<IMigrationsDatabaseLock> AcquireDatabaseLockAsync(
         CancellationToken cancellationToken = default)
     {
-        await Dependencies.RawSqlCommandBuilder
+        await this.Dependencies.RawSqlCommandBuilder
             .Build("SELECT GET_LOCK('__EFMigrationsLock', 3600);")
             .ExecuteNonQueryAsync(
                 new RelationalCommandParameterObject(
-                    Dependencies.Connection, null, null,
-                    Dependencies.CurrentContext.Context,
-                    Dependencies.CommandLogger),
+                    this.Dependencies.Connection, null, null,
+                    this.Dependencies.CurrentContext.Context,
+                    this.Dependencies.CommandLogger),
                 cancellationToken);
 
         return new MariaDbMigrationsDatabaseLock(this);

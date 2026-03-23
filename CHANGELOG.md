@@ -7,9 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Per-profile geofence toggle**: Slide toggle on each custom geofence card to activate/deactivate notifications per profile without recreating the geofence. New `POST /api/geofences/custom/{id}/activate` and `POST /api/geofences/custom/{id}/deactivate` endpoints with ownership validation. ([#36](https://github.com/PGAN-Dev/PoracleWeb.NET/issues/36), [PR #37](https://github.com/PGAN-Dev/PoracleWeb.NET/pull/37))
 
 ### Fixed
-- geofence profile toggle and cross-profile delete cleanup ([PR #37](https://github.com/PGAN-Dev/PoracleWeb.NET/pull/37))
+- **Geofence delete only removed area from active profile**: `DeleteAsync` and `AdminDeleteAsync` now remove the geofence area name from all profiles (`humans.area` + every `profiles.area` entry), not just the active one. ([#36](https://github.com/PGAN-Dev/PoracleWeb.NET/issues/36), [PR #37](https://github.com/PGAN-Dev/PoracleWeb.NET/pull/37))
+- **Area selection not profile-scoped**: `GET /api/areas` now reads from `profiles.area` for the current profile instead of the shared `humans.area` field. `PUT /api/areas` writes to both `humans.area` and `profiles.area`. ([#38](https://github.com/PGAN-Dev/PoracleWeb.NET/issues/38), [PR #37](https://github.com/PGAN-Dev/PoracleWeb.NET/pull/37))
+- **Profile switch didn't swap areas**: `SwitchProfile` now saves `humans.area` to the old profile's `profiles.area` and loads the new profile's `profiles.area` into `humans.area`, keeping PoracleJS in sync. ([#38](https://github.com/PGAN-Dev/PoracleWeb.NET/issues/38), [PR #37](https://github.com/PGAN-Dev/PoracleWeb.NET/pull/37))
+- **Geofence area operations not profile-aware**: `AddAreaToHumanAsync` and `RemoveAreaFromHumanAsync` now update both `humans.area` and `profiles.area` to prevent area subscriptions appearing on the wrong profile. ([#38](https://github.com/PGAN-Dev/PoracleWeb.NET/issues/38), [PR #37](https://github.com/PGAN-Dev/PoracleWeb.NET/pull/37))
 ## [0.6.0] - 2026-03-23
 
 ### Added

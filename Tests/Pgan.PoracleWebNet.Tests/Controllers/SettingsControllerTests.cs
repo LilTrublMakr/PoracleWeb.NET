@@ -25,7 +25,7 @@ public class SettingsControllerTests : ControllerTestBase
 
         var result = await this._sut.GetAll();
         var ok = Assert.IsType<OkObjectResult>(result);
-        var settings = Assert.IsAssignableFrom<IEnumerable<SiteSetting>>(ok.Value);
+        var settings = Assert.IsType<IEnumerable<SiteSetting>>(ok.Value, exactMatch: false);
         Assert.Equal(2, settings.Count());
     }
 
@@ -42,7 +42,7 @@ public class SettingsControllerTests : ControllerTestBase
 
         var result = await this._sut.GetAll();
         var ok = Assert.IsType<OkObjectResult>(result);
-        var settings = Assert.IsAssignableFrom<IEnumerable<SiteSetting>>(ok.Value).ToList();
+        var settings = Assert.IsType<IEnumerable<SiteSetting>>(ok.Value, exactMatch: false).ToList();
         Assert.Single(settings);
         Assert.Equal("custom_title", settings[0].Key);
     }
@@ -50,7 +50,7 @@ public class SettingsControllerTests : ControllerTestBase
     [Fact]
     public async Task GetPublicReturnsOk()
     {
-        this._sut.ControllerContext = new Microsoft.AspNetCore.Mvc.ControllerContext
+        this._sut.ControllerContext = new ControllerContext
         {
             HttpContext = new Microsoft.AspNetCore.Http.DefaultHttpContext()
         };
