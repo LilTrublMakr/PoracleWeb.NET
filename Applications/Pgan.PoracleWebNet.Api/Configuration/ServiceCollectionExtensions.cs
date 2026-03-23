@@ -23,7 +23,8 @@ public static class ServiceCollectionExtensions
         // Register PoracleWebContext for the poracle_web database (owned by this app)
         var webConnectionString = configuration.GetConnectionString("PoracleWebDb");
         services.AddDbContext<PoracleWebContext>(options =>
-            options.UseMySQL(webConnectionString!));
+            options.UseMySQL(webConnectionString!)
+                .ReplaceService<Microsoft.EntityFrameworkCore.Migrations.IHistoryRepository, MariaDbHistoryRepository>());
 
         // Register MemoryCache
         services.AddMemoryCache();
