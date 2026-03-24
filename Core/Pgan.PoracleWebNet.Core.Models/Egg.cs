@@ -28,6 +28,9 @@ public class Egg
     {
         get; set;
     }
+    public int Exclusive { get; set; }
+    public string? GymId { get; set; }
+    public int RsvpChanges { get; set; }
     public int ProfileNo
     {
         get; set;
