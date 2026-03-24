@@ -77,7 +77,7 @@ export class PokemonAddDialogComponent {
     minIv: [0, [Validators.min(0), Validators.max(100)]],
     minLevel: [0, [Validators.min(0), Validators.max(50)]],
     minWeight: [0],
-    size: [0],
+    size: [-1],
     sta: [0, [Validators.min(0), Validators.max(15)]],
   });
 
@@ -151,7 +151,7 @@ export class PokemonAddDialogComponent {
         pvpRankingLeague: pvp.pvpRankingLeague ?? 0,
         pvpRankingMinCp: pvp.pvpRankingMinCp ?? 0,
         pvpRankingWorst: pvp.pvpRankingWorst ?? 100,
-        size: filters.size ?? 0,
+        size: filters.size ?? -1,
         sta: filters.sta ?? 0,
         template: notif.template || null,
       };

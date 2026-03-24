@@ -112,11 +112,8 @@ public class MonsterCreate
         get; set;
     }
 
-    [Range(0, 5)]
-    public int Size
-    {
-        get; set;
-    }
+    [Range(-1, 5)]
+    public int Size { get; set; } = -1;
 
     [Range(0, 5)]
     public int MaxSize { get; set; } = 5;

@@ -96,7 +96,7 @@ export class QuickPickAdminDialogComponent implements OnInit {
     pvpRankingLeague: [0],
     pvpRankingMinCp: [0],
     pvpRankingWorst: [100],
-    size: [0],
+    size: [-1],
   });
 
   nestForm = this.fb.group({

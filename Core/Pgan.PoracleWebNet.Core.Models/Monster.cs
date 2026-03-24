@@ -71,10 +71,7 @@ public class Monster
     {
         get; set;
     }
-    public int Size
-    {
-        get; set;
-    }
+    public int Size { get; set; } = -1;
     public int MaxSize { get; set; } = 5;
     public int Gender
     {

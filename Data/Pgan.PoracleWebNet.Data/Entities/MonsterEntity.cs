@@ -123,10 +123,7 @@ public class MonsterEntity
     }
 
     [Column("size")]
-    public int Size
-    {
-        get; set;
-    }
+    public int Size { get; set; } = -1;
 
     [Column("max_size")]
     public int MaxSize { get; set; } = 5;
