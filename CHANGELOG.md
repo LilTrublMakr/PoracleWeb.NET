@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.6.4] - 2026-03-24
 
+## [0.6.4] - 2026-03-24
+
 ### Added
 - **Raid/Egg alarm fields**: move, evolution, exclusive, gym_id, rsvp_changes ([PR #52](https://github.com/PGAN-Dev/PoracleWeb.NET/pull/52))
 - **Gym alarm fields**: battle_changes toggle and gym_id ([PR #52](https://github.com/PGAN-Dev/PoracleWeb.NET/pull/52))
@@ -223,7 +225,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Rate limiting (per-IP) on auth endpoints
 - Docker deployment with Watchtower auto-updates
 
-[Unreleased]: https://github.com/PGAN-Dev/PoracleWeb.NET/compare/v0.6.3...HEAD
+[Unreleased]: https://github.com/PGAN-Dev/PoracleWeb.NET/compare/v0.6.4...HEAD
+[0.6.4]: https://github.com/PGAN-Dev/PoracleWeb.NET/compare/v0.6.2...v0.6.4
 [0.6.3]: https://github.com/PGAN-Dev/PoracleWeb.NET/compare/v0.6.1...v0.6.3
 [0.6.2]: https://github.com/PGAN-Dev/PoracleWeb.NET/compare/v0.6.1...v0.6.2
 [0.6.1]: https://github.com/PGAN-Dev/PoracleWeb.NET/compare/v0.6.0...v0.6.1
