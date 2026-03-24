@@ -29,10 +29,7 @@ public class MonsterCreate
     }
 
     [Range(-1, 100)]
-    public int MaxIv
-    {
-        get; set;
-    }
+    public int MaxIv { get; set; } = 100;
 
     [Range(0, 10000)]
     public int MinCp
@@ -41,10 +38,7 @@ public class MonsterCreate
     }
 
     [Range(0, 10000)]
-    public int MaxCp
-    {
-        get; set;
-    }
+    public int MaxCp { get; set; } = 9000;
 
     [Range(0, 55)]
     public int MinLevel
@@ -53,10 +47,7 @@ public class MonsterCreate
     }
 
     [Range(0, 55)]
-    public int MaxLevel
-    {
-        get; set;
-    }
+    public int MaxLevel { get; set; } = 40;
 
     [Range(0, int.MaxValue)]
     public int MinWeight
@@ -65,10 +56,7 @@ public class MonsterCreate
     }
 
     [Range(0, int.MaxValue)]
-    public int MaxWeight
-    {
-        get; set;
-    }
+    public int MaxWeight { get; set; } = 9000000;
 
     [Range(0, 15)]
     public int Atk
@@ -89,28 +77,16 @@ public class MonsterCreate
     }
 
     [Range(0, 15)]
-    public int MaxAtk
-    {
-        get; set;
-    }
+    public int MaxAtk { get; set; } = 15;
 
     [Range(0, 15)]
-    public int MaxDef
-    {
-        get; set;
-    }
+    public int MaxDef { get; set; } = 15;
 
     [Range(0, 15)]
-    public int MaxSta
-    {
-        get; set;
-    }
+    public int MaxSta { get; set; } = 15;
 
     [Range(0, 4096)]
-    public int PvpRankingWorst
-    {
-        get; set;
-    }
+    public int PvpRankingWorst { get; set; } = 4096;
 
     [Range(0, 4096)]
     public int PvpRankingBest
@@ -143,10 +119,7 @@ public class MonsterCreate
     }
 
     [Range(0, 5)]
-    public int MaxSize
-    {
-        get; set;
-    }
+    public int MaxSize { get; set; } = 5;
 
     [Range(0, 3)]
     public int Gender
