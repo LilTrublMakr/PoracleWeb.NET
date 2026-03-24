@@ -8,8 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- redesign admin geofence submissions page (#55) ([PR #56](https://github.com/PGAN-Dev/PoracleWeb.NET/pull/56))
-- **Admin geofence submissions page redesign**: Region grouping, three view modes (card/list/table), sortable columns, Discord avatar display, resolved reviewer names ([#55](https://github.com/PGAN-Dev/PoracleWeb.NET/issues/55))
+- **Admin geofence submissions page redesign**: Region grouping, three view modes (card/list/table), sortable columns, Discord avatar display, resolved reviewer names ([#55](https://github.com/PGAN-Dev/PoracleWeb.NET/issues/55), [PR #56](https://github.com/PGAN-Dev/PoracleWeb.NET/pull/56))
 - **Reviewer name resolution**: Backend resolves `reviewedBy` Discord IDs to display names and avatars via batch human lookup
 - **Table view**: Flat ungrouped table with sortable columns (name, status, owner, region, points, created, submitted) and reviewer info
 - **Region grouping**: Card and list views group geofences by region with collapsible expansion panels
