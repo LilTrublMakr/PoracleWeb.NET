@@ -17,7 +17,14 @@ public partial class AdminGeofenceController(IUserGeofenceService userGeofenceSe
             return this.Forbid();
         }
 
-        var geofences = await this._userGeofenceService.GetAllAsync();
+        var geofences = await this._userGeofenceService.GetAllWithDetailsAsync();
+
+        foreach (var geofence in geofences)
+        {
+            geofence.OwnerAvatarUrl = Services.AvatarCacheService.GetAvatar(geofence.HumanId)
+                ?? GetDefaultAvatarUrl(geofence.HumanId);
+        }
+
         return this.Ok(geofences);
     }
 
@@ -113,6 +120,16 @@ public partial class AdminGeofenceController(IUserGeofenceService userGeofenceSe
     public class RejectRequest
     {
         public string ReviewNotes { get; set; } = string.Empty;
+    }
+
+    private static string GetDefaultAvatarUrl(string userId)
+    {
+        if (long.TryParse(userId, out var id))
+        {
+            return $"https://cdn.discordapp.com/embed/avatars/{(id >> 22) % 6}.png";
+        }
+
+        return "https://cdn.discordapp.com/embed/avatars/0.png";
     }
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "Failed to admin delete geofence {Id}")]

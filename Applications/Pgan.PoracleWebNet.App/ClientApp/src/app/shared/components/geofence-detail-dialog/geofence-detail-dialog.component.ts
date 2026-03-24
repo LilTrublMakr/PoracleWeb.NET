@@ -1,0 +1,101 @@
+import { CommonModule, DatePipe } from '@angular/common';
+import { AfterViewInit, Component, ElementRef, OnDestroy, ViewChild, inject } from '@angular/core';
+import { MatButtonModule } from '@angular/material/button';
+import { MatChipsModule } from '@angular/material/chips';
+import { MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
+import { MatIconModule } from '@angular/material/icon';
+import * as L from 'leaflet';
+
+import { UserGeofence } from '../../../core/models';
+
+export interface GeofenceDetailDialogData {
+  geofence: UserGeofence;
+}
+
+const STATUS_COLORS: Record<string, string> = {
+  active: '#2196f3',
+  approved: '#4caf50',
+  pending_review: '#ff9800',
+  rejected: '#f44336',
+};
+
+@Component({
+  imports: [CommonModule, DatePipe, MatButtonModule, MatChipsModule, MatDialogModule, MatIconModule],
+  selector: 'app-geofence-detail-dialog',
+  standalone: true,
+  styleUrl: './geofence-detail-dialog.component.scss',
+  templateUrl: './geofence-detail-dialog.component.html',
+})
+export class GeofenceDetailDialogComponent implements AfterViewInit, OnDestroy {
+  private map: L.Map | null = null;
+
+  readonly data = inject<GeofenceDetailDialogData>(MAT_DIALOG_DATA);
+
+  @ViewChild('detailMap', { static: true }) mapElement!: ElementRef<HTMLDivElement>;
+
+  get geofence(): UserGeofence {
+    return this.data.geofence;
+  }
+
+  get pointCount(): number {
+    return this.geofence.pointCount ?? this.geofence.polygon?.length ?? 0;
+  }
+
+  get statusColor(): string {
+    return STATUS_COLORS[this.geofence.status] || '#9e9e9e';
+  }
+
+  get statusLabel(): string {
+    switch (this.geofence.status) {
+      case 'active':
+        return 'Active';
+      case 'approved':
+        return 'Approved';
+      case 'pending_review':
+        return 'Pending Review';
+      case 'rejected':
+        return 'Rejected';
+      default:
+        return this.geofence.status;
+    }
+  }
+
+  ngAfterViewInit(): void {
+    this.initMap();
+  }
+
+  ngOnDestroy(): void {
+    if (this.map) {
+      this.map.remove();
+      this.map = null;
+    }
+  }
+
+  private initMap(): void {
+    this.map = L.map(this.mapElement.nativeElement, {
+      attributionControl: true,
+      zoomControl: true,
+    }).setView([37.5, -77.4], 10);
+
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+      attribution: '&copy; <a href="https://carto.com/">CARTO</a> &copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>',
+      maxZoom: 19,
+      subdomains: 'abcd',
+    }).addTo(this.map);
+
+    if (this.geofence.polygon && this.geofence.polygon.length >= 3) {
+      const color = STATUS_COLORS[this.geofence.status] || '#9e9e9e';
+      const latLngs: L.LatLngExpression[] = this.geofence.polygon.map(coord => [coord[0], coord[1]] as L.LatLngExpression);
+
+      const polygon = L.polygon(latLngs, {
+        color,
+        fillColor: color,
+        fillOpacity: 0.2,
+        weight: 2,
+      });
+
+      polygon.addTo(this.map);
+      this.map.fitBounds(polygon.getBounds(), { padding: [30, 30] });
+    }
+  }
+}

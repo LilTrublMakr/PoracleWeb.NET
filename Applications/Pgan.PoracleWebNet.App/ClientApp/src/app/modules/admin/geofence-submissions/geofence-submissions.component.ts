@@ -1,5 +1,17 @@
 import { DatePipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
+import {
+  AfterViewInit,
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  ElementRef,
+  NgZone,
+  OnDestroy,
+  OnInit,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
@@ -9,6 +21,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import * as L from 'leaflet';
 import { firstValueFrom } from 'rxjs';
 
 import { UserGeofence } from '../../../core/models';
@@ -19,6 +32,14 @@ import {
   GeofenceApprovalDialogData,
   GeofenceApprovalDialogResult,
 } from '../../../shared/components/geofence-approval-dialog/geofence-approval-dialog.component';
+import { GeofenceDetailDialogComponent } from '../../../shared/components/geofence-detail-dialog/geofence-detail-dialog.component';
+
+const STATUS_COLORS: Record<string, string> = {
+  active: '#2196f3',
+  approved: '#4caf50',
+  pending_review: '#ff9800',
+  rejected: '#f44336',
+};
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -38,10 +59,15 @@ import {
   styleUrl: './geofence-submissions.component.scss',
   templateUrl: './geofence-submissions.component.html',
 })
-export class GeofenceSubmissionsComponent implements OnInit {
+export class GeofenceSubmissionsComponent implements OnInit, AfterViewInit, OnDestroy {
   private readonly adminGeofenceService = inject(AdminGeofenceService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly dialog = inject(MatDialog);
+  private readonly elementRef = inject(ElementRef);
+  private readonly mapInstances = new Map<number, L.Map>();
+  private readonly ngZone = inject(NgZone);
+
+  private observer: IntersectionObserver | null = null;
   private readonly snackBar = inject(MatSnackBar);
 
   readonly activeFilter = signal<string>('all');
@@ -83,6 +109,7 @@ export class GeofenceSubmissionsComponent implements OnInit {
         .subscribe({
           error: () => this.snackBar.open('Failed to delete geofence', 'OK', { duration: 3000 }),
           next: () => {
+            this.destroyMap(geofence.id);
             this.allGeofences.update(list => list.filter(g => g.id !== geofence.id));
             this.snackBar.open(`"${geofence.displayName}" deleted`, 'OK', { duration: 3000 });
           },
@@ -90,8 +117,30 @@ export class GeofenceSubmissionsComponent implements OnInit {
     }
   }
 
+  getPointCount(geofence: UserGeofence): number {
+    return geofence.pointCount || geofence.polygon?.length || 0;
+  }
+
+  ngAfterViewInit(): void {
+    this.setupIntersectionObserver();
+  }
+
+  ngOnDestroy(): void {
+    this.observer?.disconnect();
+    this.mapInstances.forEach(map => map.remove());
+    this.mapInstances.clear();
+  }
+
   ngOnInit(): void {
     this.loadAll();
+  }
+
+  openDetailDialog(geofence: UserGeofence): void {
+    this.dialog.open(GeofenceDetailDialogComponent, {
+      maxWidth: '90vw',
+      width: '720px',
+      data: { geofence },
+    });
   }
 
   openReviewDialog(geofence: UserGeofence): void {
@@ -129,6 +178,49 @@ export class GeofenceSubmissionsComponent implements OnInit {
     });
   }
 
+  private destroyMap(geofenceId: number): void {
+    const map = this.mapInstances.get(geofenceId);
+    if (map) {
+      map.remove();
+      this.mapInstances.delete(geofenceId);
+    }
+  }
+
+  private initMapThumbnail(container: HTMLElement, geofence: UserGeofence): void {
+    if (!geofence.polygon?.length || this.mapInstances.has(geofence.id)) return;
+
+    this.ngZone.runOutsideAngular(() => {
+      const map = L.map(container, {
+        attributionControl: false,
+        boxZoom: false,
+        doubleClickZoom: false,
+        dragging: false,
+        keyboard: false,
+        scrollWheelZoom: false,
+        touchZoom: false,
+        zoomControl: false,
+      });
+
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+        maxZoom: 19,
+      }).addTo(map);
+
+      const color = STATUS_COLORS[geofence.status] || '#9e9e9e';
+      const polygon = L.polygon(
+        geofence.polygon!.map(([lat, lng]) => [lat, lng] as L.LatLngTuple),
+        {
+          color,
+          fillColor: color,
+          fillOpacity: 0.15,
+          weight: 2,
+        },
+      ).addTo(map);
+
+      map.fitBounds(polygon.getBounds(), { padding: [10, 10] });
+      this.mapInstances.set(geofence.id, map);
+    });
+  }
+
   private loadAll(): void {
     this.loading.set(true);
     this.adminGeofenceService
@@ -142,7 +234,37 @@ export class GeofenceSubmissionsComponent implements OnInit {
         next: geofences => {
           this.allGeofences.set(geofences);
           this.loading.set(false);
+          // Re-observe after data loads
+          setTimeout(() => this.observeMapContainers(), 0);
         },
       });
+  }
+
+  private observeMapContainers(): void {
+    if (!this.observer) return;
+
+    const containers = this.elementRef.nativeElement.querySelectorAll('.map-thumbnail[data-geofence-id]');
+    containers.forEach((el: HTMLElement) => this.observer!.observe(el));
+  }
+
+  private setupIntersectionObserver(): void {
+    this.observer = new IntersectionObserver(
+      entries => {
+        entries.forEach(entry => {
+          if (!entry.isIntersecting) return;
+
+          const container = entry.target as HTMLElement;
+          const geofenceId = parseInt(container.dataset['geofenceId'] || '0', 10);
+          if (!geofenceId || this.mapInstances.has(geofenceId)) return;
+
+          const geofence = this.allGeofences().find(g => g.id === geofenceId);
+          if (geofence) {
+            this.initMapThumbnail(container, geofence);
+            this.observer!.unobserve(container);
+          }
+        });
+      },
+      { rootMargin: '100px' },
+    );
   }
 }

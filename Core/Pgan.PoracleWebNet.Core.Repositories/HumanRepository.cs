@@ -29,6 +29,15 @@ public class HumanRepository(PoracleContext context, IMapper mapper) : IHumanRep
         return entity is null ? null : this._mapper.Map<Human>(entity);
     }
 
+    public async Task<IEnumerable<Human>> GetByIdsAsync(IEnumerable<string> ids)
+    {
+        var idList = ids.ToList();
+        var entities = await this._context.Humans
+            .Where(h => idList.Contains(h.Id))
+            .ToListAsync();
+        return this._mapper.Map<IEnumerable<Human>>(entities);
+    }
+
     public async Task<Human?> GetByIdAndProfileAsync(string id, int profileNo)
     {
         var entity = await this._context.Humans
