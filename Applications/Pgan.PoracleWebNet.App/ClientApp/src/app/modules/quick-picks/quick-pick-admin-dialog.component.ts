@@ -85,7 +85,7 @@ export class QuickPickAdminDialogComponent implements OnInit {
     maxCp: [9000],
     maxIv: [100],
     maxLevel: [40],
-    maxSize: [0],
+    maxSize: [5],
     maxWeight: [9000000],
     minCp: [0],
     minIv: [0],
