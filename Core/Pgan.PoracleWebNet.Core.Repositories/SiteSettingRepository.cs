@@ -52,7 +52,9 @@ public class SiteSettingRepository(PoracleWebContext context, IMapper mapper) : 
         }
         else
         {
-            this._mapper.Map(setting, entity);
+            entity.Value = setting.Value;
+            entity.ValueType = setting.ValueType;
+            entity.Category = setting.Category;
         }
 
         await this._context.SaveChangesAsync();
