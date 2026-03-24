@@ -35,7 +35,7 @@ public class SettingsController(ISiteSettingService siteSettingService) : BaseAp
             settings = settings.Where(s => !SensitiveKeys.Contains(s.Key));
         }
 
-        return this.Ok(settings);
+        return this.Ok(settings.ToList());
     }
 
     [AllowAnonymous]
