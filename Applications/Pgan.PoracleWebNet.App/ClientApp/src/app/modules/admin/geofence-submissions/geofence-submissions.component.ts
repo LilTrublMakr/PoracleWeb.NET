@@ -118,7 +118,7 @@ export class GeofenceSubmissionsComponent implements OnInit, AfterViewInit, OnDe
   }
 
   getPointCount(geofence: UserGeofence): number {
-    return geofence.pointCount || geofence.polygon?.length || 0;
+    return geofence.pointCount ?? geofence.polygon?.length ?? 0;
   }
 
   ngAfterViewInit(): void {

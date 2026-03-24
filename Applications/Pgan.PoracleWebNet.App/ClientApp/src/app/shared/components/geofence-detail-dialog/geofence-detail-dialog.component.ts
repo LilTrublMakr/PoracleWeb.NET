@@ -1,5 +1,5 @@
-import { CommonModule, DatePipe } from '@angular/common';
-import { AfterViewInit, Component, ElementRef, OnDestroy, ViewChild, inject } from '@angular/core';
+import { DatePipe } from '@angular/common';
+import { AfterViewInit, ChangeDetectionStrategy, Component, ElementRef, OnDestroy, ViewChild, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatChipsModule } from '@angular/material/chips';
 import { MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
@@ -20,7 +20,8 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 @Component({
-  imports: [CommonModule, DatePipe, MatButtonModule, MatChipsModule, MatDialogModule, MatIconModule],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [DatePipe, MatButtonModule, MatChipsModule, MatDialogModule, MatIconModule],
   selector: 'app-geofence-detail-dialog',
   standalone: true,
   styleUrl: './geofence-detail-dialog.component.scss',
@@ -75,7 +76,7 @@ export class GeofenceDetailDialogComponent implements AfterViewInit, OnDestroy {
     this.map = L.map(this.mapElement.nativeElement, {
       attributionControl: true,
       zoomControl: true,
-    }).setView([37.5, -77.4], 10);
+    }).setView([0, 0], 2);
 
     L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
       attribution: '&copy; <a href="https://carto.com/">CARTO</a> &copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>',
