@@ -135,7 +135,7 @@ export class GeofenceSubmissionsComponent implements OnInit, AfterViewInit, OnDe
       maxWidth: '90vw',
       panelClass: 'geofence-detail-dialog-panel',
       width: '720px',
-      data: { geofence },
+      data: { geofence, allGeofences: this.allGeofences() },
     });
   }
 

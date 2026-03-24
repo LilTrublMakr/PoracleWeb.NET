@@ -10,6 +10,7 @@ import { UserGeofence } from '../../../core/models';
 import { GEOFENCE_STATUS_COLORS } from '../../utils/geofence.utils';
 
 export interface GeofenceDetailDialogData {
+  allGeofences?: UserGeofence[];
   geofence: UserGeofence;
 }
 
@@ -84,6 +85,24 @@ export class GeofenceDetailDialogComponent implements OnDestroy {
       subdomains: 'abcd',
     }).addTo(this.map);
 
+    // Draw other geofences first (behind) in muted colors for reference
+    const others = (this.data.allGeofences ?? []).filter(g => g.id !== this.geofence.id);
+    for (const other of others) {
+      if (other.polygon && other.polygon.length >= 3) {
+        const otherLatLngs: L.LatLngExpression[] = other.polygon.map(coord => [coord[0], coord[1]] as L.LatLngExpression);
+        L.polygon(otherLatLngs, {
+          color: '#9e9e9e',
+          dashArray: '4 6',
+          fillColor: '#9e9e9e',
+          fillOpacity: 0.06,
+          weight: 1.5,
+        })
+          .bindTooltip(other.displayName, { sticky: true })
+          .addTo(this.map);
+      }
+    }
+
+    // Draw the selected geofence on top in full status color
     if (this.geofence.polygon && this.geofence.polygon.length >= 3) {
       const color = GEOFENCE_STATUS_COLORS[this.geofence.status] || '#9e9e9e';
       const latLngs: L.LatLngExpression[] = this.geofence.polygon.map(coord => [coord[0], coord[1]] as L.LatLngExpression);
