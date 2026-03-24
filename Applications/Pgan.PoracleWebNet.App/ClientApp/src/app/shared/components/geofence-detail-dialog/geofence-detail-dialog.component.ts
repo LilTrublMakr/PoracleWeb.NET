@@ -9,6 +9,12 @@ import * as L from 'leaflet';
 import { GeofenceData, UserGeofence } from '../../../core/models';
 import { GEOFENCE_STATUS_COLORS } from '../../utils/geofence.utils';
 
+const AREA_COLORS = [
+  '#e53935', '#1e88e5', '#43a047', '#fb8c00', '#8e24aa',
+  '#00acc1', '#f4511e', '#3949ab', '#7cb342', '#c0ca33',
+  '#6d4c41', '#546e7a', '#d81b60', '#039be5', '#00897b',
+];
+
 export interface GeofenceDetailDialogData {
   geofence: UserGeofence;
   referenceGeofences?: GeofenceData[];
@@ -85,18 +91,22 @@ export class GeofenceDetailDialogComponent implements OnDestroy {
       subdomains: 'abcd',
     }).addTo(this.map);
 
-    // Draw region/area geofences from Poracle as muted reference context
-    for (const ref of this.data.referenceGeofences ?? []) {
+    // Draw region/area geofences from Poracle using the same color palette as area-map
+    const refs = this.data.referenceGeofences ?? [];
+    for (let i = 0; i < refs.length; i++) {
+      const ref = refs[i];
       if (ref.path && ref.path.length >= 3) {
+        const color = AREA_COLORS[i % AREA_COLORS.length];
         const refLatLngs: L.LatLngExpression[] = ref.path.map(coord => [coord[0], coord[1]] as L.LatLngExpression);
         L.polygon(refLatLngs, {
-          color: '#78909c',
-          dashArray: '4 6',
-          fillColor: '#78909c',
-          fillOpacity: 0.04,
-          weight: 1.5,
+          color,
+          dashArray: '5, 5',
+          fillColor: color,
+          fillOpacity: 0.08,
+          opacity: 0.4,
+          weight: 1,
         })
-          .bindTooltip(ref.name, { sticky: true })
+          .bindTooltip(ref.name, { className: 'area-tooltip', direction: 'top', sticky: true })
           .addTo(this.map);
       }
     }
