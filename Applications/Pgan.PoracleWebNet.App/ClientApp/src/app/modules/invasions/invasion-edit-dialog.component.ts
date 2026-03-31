@@ -11,6 +11,7 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTabsModule } from '@angular/material/tabs';
 
+import { EVENT_TYPE_INFO, getDisplayName, getGruntIconUrl, isEventType } from './invasion.constants';
 import { Invasion, InvasionUpdate } from '../../core/models';
 import { AuthService } from '../../core/services/auth.service';
 import { InvasionService } from '../../core/services/invasion.service';
@@ -39,34 +40,6 @@ import { TemplateSelectorComponent } from '../../shared/components/template-sele
   templateUrl: './invasion-edit-dialog.component.html',
 })
 export class InvasionEditDialogComponent {
-  private static readonly INVASION_ID: Record<string, number> = {
-    Decoy: 50,
-    Giovanni: 44,
-    mixed: 41,
-  };
-
-  private static readonly TYPE_ID: Record<string, number> = {
-    Bug: 7,
-    Dark: 17,
-    Dragon: 16,
-    Electric: 13,
-    Fairy: 18,
-    Fighting: 2,
-    Fire: 10,
-    Flying: 3,
-    Ghost: 8,
-    Grass: 12,
-    Ground: 5,
-    Ice: 15,
-    Metal: 9,
-    Normal: 1,
-    Poison: 4,
-    Psychic: 14,
-    Rock: 6,
-    Water: 11,
-  };
-
-  private static readonly UICONS = 'https://raw.githubusercontent.com/whitewillem/PogoAssets/main/uicons';
   private readonly fb = inject(FormBuilder);
   private readonly invasionService = inject(InvasionService);
   private readonly snackBar = inject(MatSnackBar);
@@ -83,9 +56,26 @@ export class InvasionEditDialogComponent {
     template: [this.data.template ?? ''],
   });
 
+  readonly isEvent = isEventType(this.data.gruntType);
   readonly isWebhook = inject(AuthService).isImpersonating();
 
   saving = signal(false);
+
+  getDisplayName(): string {
+    return getDisplayName(this.data.gruntType) || 'Unknown Grunt';
+  }
+
+  getEventColor(): string {
+    return EVENT_TYPE_INFO[this.data.gruntType ?? '']?.color ?? '';
+  }
+
+  getEventIcon(): string {
+    return EVENT_TYPE_INFO[this.data.gruntType ?? '']?.icon ?? '';
+  }
+
+  getEventImgUrl(): string {
+    return EVENT_TYPE_INFO[this.data.gruntType ?? '']?.imgUrl ?? '';
+  }
 
   getGenderLabel(): string {
     switch (this.data.gender) {
@@ -99,12 +89,7 @@ export class InvasionEditDialogComponent {
   }
 
   getGruntIcon(): string {
-    const type = this.data.gruntType ?? '';
-    const typeId = InvasionEditDialogComponent.TYPE_ID[type];
-    if (typeId) return `${InvasionEditDialogComponent.UICONS}/type/${typeId}.png`;
-    const invasionId = InvasionEditDialogComponent.INVASION_ID[type];
-    if (invasionId) return `${InvasionEditDialogComponent.UICONS}/invasion/${invasionId}.png`;
-    return '';
+    return getGruntIconUrl(this.data.gruntType);
   }
 
   onDistanceModeChange(): void {
@@ -120,7 +105,7 @@ export class InvasionEditDialogComponent {
       .update(this.data.uid, {
         clean: v.clean ? 1 : 0,
         distance: dist,
-        gender: v.gender ?? 0,
+        gender: this.isEvent ? 0 : (v.gender ?? 0),
         gruntType: this.data.gruntType ?? '',
         ping: v.ping || null,
         template: v.template || null,

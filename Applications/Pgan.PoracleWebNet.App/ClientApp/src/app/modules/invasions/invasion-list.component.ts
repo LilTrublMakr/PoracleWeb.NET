@@ -12,34 +12,8 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { firstValueFrom } from 'rxjs';
 
 import { InvasionAddDialogComponent } from './invasion-add-dialog.component';
-
-const UICONS_BASE = 'https://raw.githubusercontent.com/whitewillem/PogoAssets/main/uicons';
-const GRUNT_TYPE_ID: Record<string, number> = {
-  Bug: 7,
-  Dark: 17,
-  Dragon: 16,
-  Electric: 13,
-  Fairy: 18,
-  Fighting: 2,
-  Fire: 10,
-  Flying: 3,
-  Ghost: 8,
-  Grass: 12,
-  Ground: 5,
-  Ice: 15,
-  Metal: 9,
-  Normal: 1,
-  Poison: 4,
-  Psychic: 14,
-  Rock: 6,
-  Water: 11,
-};
-const GRUNT_INVASION_ID: Record<string, number> = {
-  Decoy: 50,
-  Giovanni: 44,
-  mixed: 41,
-};
 import { InvasionEditDialogComponent } from './invasion-edit-dialog.component';
+import { EVENT_TYPE_INFO, getDisplayName as displayName, getGruntIconUrl, isEventType as checkEventType } from './invasion.constants';
 import { Invasion } from '../../core/models';
 import { InvasionService } from '../../core/services/invasion.service';
 import { MasterDataService } from '../../core/services/masterdata.service';
@@ -173,13 +147,33 @@ export class InvasionListComponent implements OnInit {
     return meters >= 1000 ? `${(meters / 1000).toFixed(1)} km` : `${meters} m`;
   }
 
+  getCardAccent(gruntType: string | null): string | null {
+    const info = EVENT_TYPE_INFO[gruntType ?? ''];
+    return info ? info.color : null;
+  }
+
+  getDisplayName(gruntType: string | null): string {
+    return displayName(gruntType);
+  }
+
+  getEventColor(gruntType: string | null): string {
+    return EVENT_TYPE_INFO[gruntType ?? '']?.color ?? '';
+  }
+
+  getEventIcon(gruntType: string | null): string {
+    return EVENT_TYPE_INFO[gruntType ?? '']?.icon ?? '';
+  }
+
+  getEventImgUrl(gruntType: string | null): string {
+    return EVENT_TYPE_INFO[gruntType ?? '']?.imgUrl ?? '';
+  }
+
   getGruntIcon(gruntType: string | null): string {
-    const type = gruntType ?? '';
-    const typeId = GRUNT_TYPE_ID[type];
-    if (typeId) return `${UICONS_BASE}/type/${typeId}.png`;
-    const invasionId = GRUNT_INVASION_ID[type];
-    if (invasionId) return `${UICONS_BASE}/invasion/${invasionId}.png`;
-    return '';
+    return getGruntIconUrl(gruntType);
+  }
+
+  isEventType(gruntType: string | null): boolean {
+    return checkEventType(gruntType);
   }
 
   loadInvasions(): void {
