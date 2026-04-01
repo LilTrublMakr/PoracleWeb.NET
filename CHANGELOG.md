@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- show gym name on raid and egg alarm cards ([PR #94](https://github.com/PGAN-Dev/PoracleWeb.NET/pull/94))
+
 ### Fixed
 - allow removal of custom geofence areas from selected chips ([PR #95](https://github.com/PGAN-Dev/PoracleWeb.NET/pull/95))
 - settings changes reflect immediately without page refresh ([PR #97](https://github.com/PGAN-Dev/PoracleWeb.NET/pull/97))
