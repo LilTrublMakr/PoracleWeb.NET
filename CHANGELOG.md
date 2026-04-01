@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- prevent area map zoom/pan reset when selecting areas ([PR #96](https://github.com/PGAN-Dev/PoracleWeb.NET/pull/96))
+
 ### Added
 - show gym name on raid and egg alarm cards ([PR #94](https://github.com/PGAN-Dev/PoracleWeb.NET/pull/94))
 
