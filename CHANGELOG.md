@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.3.0] - 2026-04-01
 
+## [1.3.0] - 2026-04-01
+
 ### Added
 - **Admin-disabled user banner**: distinct banner for admin-disabled users with Discord support and ticket links, replacing the broken Resume button ([#82](https://github.com/PGAN-Dev/PoracleWeb.NET/issues/82), [PR #83](https://github.com/PGAN-Dev/PoracleWeb.NET/pull/83))
 - **`adminDisable` field on UserInfo API**: frontend can now distinguish admin-disabled from self-paused users ([PR #83](https://github.com/PGAN-Dev/PoracleWeb.NET/pull/83))
@@ -280,7 +282,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Rate limiting (per-IP) on auth endpoints
 - Docker deployment with Watchtower auto-updates
 
-[Unreleased]: https://github.com/PGAN-Dev/PoracleWeb.NET/compare/v1.2.0...HEAD
+[Unreleased]: https://github.com/PGAN-Dev/PoracleWeb.NET/compare/v1.3.0...HEAD
+[1.3.0]: https://github.com/PGAN-Dev/PoracleWeb.NET/compare/v1.1.2...v1.3.0
 [1.2.0]: https://github.com/PGAN-Dev/PoracleWeb.NET/compare/v1.1.1...v1.2.0
 [1.1.2]: https://github.com/PGAN-Dev/PoracleWeb.NET/compare/v1.1.0...v1.1.2
 [1.1.1]: https://github.com/PGAN-Dev/PoracleWeb.NET/compare/v1.0.2...v1.1.1
