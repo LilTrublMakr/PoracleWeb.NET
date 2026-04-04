@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 ### Fixed
+- site title reverts to 'DM Alerts' after Discord OAuth redirect ([PR #111](https://github.com/PGAN-Dev/PoracleWeb.NET/pull/111))
 - webhook admin actions broken by URL slashes in route parameters ([PR #112](https://github.com/PGAN-Dev/PoracleWeb.NET/pull/112))
 ## [2.1.1] - 2026-04-04
 
