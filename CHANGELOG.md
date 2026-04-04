@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [2.1.2] - 2026-04-04
 
+## [2.1.2] - 2026-04-04
+
 ### Fixed
 - **Areas page layout**: Remove `max-width: 800px` constraint for consistent full-width layout matching My Geofences page ([#107](https://github.com/PGAN-Dev/PoracleWeb.NET/issues/107), [PR #110](https://github.com/PGAN-Dev/PoracleWeb.NET/pull/110))
 - **Site title after OAuth redirect**: Load site settings after Discord callback stores JWT token — title was stuck on default "DM Alerts" because `loadOnce()` fired before the token was available ([#106](https://github.com/PGAN-Dev/PoracleWeb.NET/issues/106), [PR #111](https://github.com/PGAN-Dev/PoracleWeb.NET/pull/111))
@@ -358,6 +360,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Docker deployment with Watchtower auto-updates
 
 [Unreleased]: https://github.com/PGAN-Dev/PoracleWeb.NET/compare/v2.1.2...HEAD
+[2.1.2]: https://github.com/PGAN-Dev/PoracleWeb.NET/compare/v2.1.1...v2.1.2
 [2.1.2]: https://github.com/PGAN-Dev/PoracleWeb.NET/compare/v2.1.1...v2.1.2
 [2.1.1]: https://github.com/PGAN-Dev/PoracleWeb.NET/compare/v2.1.0...v2.1.1
 [2.1.1]: https://github.com/PGAN-Dev/PoracleWeb.NET/compare/v2.1.0...v2.1.1
