@@ -1,12 +1,12 @@
 # Docker Compose
 
-The `docker-compose.yml` provides a production-ready container configuration.
+The `docker-compose.yml` provides a production-ready container configuration. The `.env` file it reads is the same format used by standalone mode — see the [Configuration Reference](reference.md) for the full list of settings.
 
 ## Container settings
 
 | Setting | Value |
 |---|---|
-| **Port mapping** | Host `8082` → Container `8080` |
+| **Port mapping** | Host `${PORT:-8082}` → Container `8080`. Set `PORT` in `.env` to change. |
 | **Volumes** | `./data` for avatar/DTS cache persistence, Poracle config directory (read-only) |
 | **Health check** | HTTP check every 30s with 15s startup grace period |
 | **Resource limits** | 2 CPUs, 2GB memory |
@@ -17,15 +17,16 @@ The `docker-compose.yml` provides a production-ready container configuration.
 
 ```yaml
 services:
-  poracle-web:
+  poracleweb.net:
     image: ghcr.io/pgan-dev/poracleweb.net:latest
     ports:
-      - "8082:8080"
-    env_file:
-      - .env
+      - "${PORT:-8082}:8080"
+    environment:
+      # All settings are loaded from .env — see docker-compose.yml for the full list
+      - ConnectionStrings__PoracleDb=Server=${DB_HOST:-host.docker.internal};Port=${DB_PORT:-3306};...
     volumes:
       - ./data:/app/data
-      - ${PORACLE_CONFIG_DIR}:/app/poracle-config:ro
+      - ${PORACLE_CONFIG_DIR:-./data}:/poracle-config:ro
     restart: unless-stopped
 ```
 
@@ -51,7 +52,7 @@ Mount your PoracleJS `config/` directory as read-only for DTS template preview f
 
 ```yaml
 volumes:
-  - /path/to/PoracleJS/config:/app/poracle-config:ro
+  - /path/to/PoracleJS/config:/poracle-config:ro
 ```
 
 ### SSH key (optional)
@@ -74,16 +75,22 @@ services:
 
 ## Building locally
 
+Using the convenience script:
+
 ```bash
-# Build from source
+./scripts/docker.sh build     # Build from source
+./scripts/docker.sh start     # Start the container
+./scripts/docker.sh update    # Rebuild and recreate
+./scripts/docker.sh clean     # Force rebuild (no cache)
+./scripts/docker.sh logs      # Tail logs
+./scripts/docker.sh stop      # Stop the container
+```
+
+Or with raw Docker commands:
+
+```bash
 docker build -t poracleweb.net:latest .
-
-# Force clean rebuild
-docker build --no-cache -t poracleweb.net:latest .
-
-# Start
 docker compose up -d
-
-# Force recreate
 docker compose up -d --force-recreate
+docker build --no-cache -t poracleweb.net:latest .
 ```

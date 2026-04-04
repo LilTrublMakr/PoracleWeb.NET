@@ -36,6 +36,8 @@ RUN mkdir -p /app/data /home/appuser/.ssh && chown -R appuser /app/data /home/ap
 
 EXPOSE 8080
 ENV ASPNETCORE_URLS=http://+:8080
+# ASPNETCORE_URLS takes precedence over Server:Port in appsettings.
+# To override: docker run -e ASPNETCORE_URLS=http://+:9090 -p 9090:9090 ...
 ENV ASPNETCORE_ENVIRONMENT=Production
 ENV DATA_DIR=/app/data
 

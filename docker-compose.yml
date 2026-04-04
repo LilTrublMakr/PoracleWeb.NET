@@ -8,12 +8,12 @@ services:
     #   context: .
     #   dockerfile: Dockerfile
     ports:
-      - "8082:8080"
+      - "${PORT:-8082}:8080"
     environment:
       # Database (Poracle — existing PoracleJS database, read/write)
-      - ConnectionStrings__PoracleDb=Server=${DB_HOST:-host.docker.internal};Port=${DB_PORT:-3309};Database=${DB_NAME:-poracle};User=${DB_USER:-root};Password=${DB_PASSWORD};AllowZeroDateTime=true;ConvertZeroDateTime=true
+      - ConnectionStrings__PoracleDb=Server=${DB_HOST:-host.docker.internal};Port=${DB_PORT:-3306};Database=${DB_NAME:-poracle};User=${DB_USER:-root};Password=${DB_PASSWORD};AllowZeroDateTime=true;ConvertZeroDateTime=true
       # PoracleWeb DB (app-owned database for user geofences — separate from Poracle DB)
-      - ConnectionStrings__PoracleWebDb=Server=${WEB_DB_HOST:-host.docker.internal};Port=${WEB_DB_PORT:-3309};Database=${WEB_DB_NAME:-poracle_web};User=${WEB_DB_USER:-root};Password=${WEB_DB_PASSWORD};AllowZeroDateTime=true;ConvertZeroDateTime=true
+      - ConnectionStrings__PoracleWebDb=Server=${WEB_DB_HOST:-host.docker.internal};Port=${WEB_DB_PORT:-3306};Database=${WEB_DB_NAME:-poracle_web};User=${WEB_DB_USER:-root};Password=${WEB_DB_PASSWORD};AllowZeroDateTime=true;ConvertZeroDateTime=true
       - ConnectionStrings__ScannerDb=${SCANNER_DB_CONNECTION:-}
       # JWT
       - Jwt__Secret=${JWT_SECRET}

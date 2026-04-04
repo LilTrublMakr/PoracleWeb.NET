@@ -1,73 +1,84 @@
 # Configuration Reference
 
-All configuration can be provided via environment variables (Docker) or `appsettings.json` (development).
+All configuration can be provided via environment variables or `appsettings.json`. The same `.env` file works for both Docker and standalone mode.
+
+!!! tip "Short env var names"
+    The `.env` file uses friendly short names (`DB_HOST`, `JWT_SECRET`, `DISCORD_CLIENT_ID`, etc.). The app automatically translates these to .NET's configuration format at startup. You can use either the short names or the `__`-delimited names shown in the table below.
+
+## Server
+
+| Setting | Env Variable | Default | Description |
+|---|---|---|---|
+| Port | `PORT` | `8082` | HTTP port the app listens on. In Docker, this is the host port. Standalone, this is the port the app binds to. |
+| `Server:Port` | `Server__Port` | `8082` | Alternative to `PORT` for the .NET config convention. `PORT` takes precedence. Ignored when `ASPNETCORE_URLS` is set. |
 
 ## Required settings
 
-| Setting | Env Variable | Description |
-|---|---|---|
-| `ConnectionStrings:PoracleDb` | `ConnectionStrings__PoracleDb` | MySQL connection to Poracle database |
-| `Jwt:Secret` | `Jwt__Secret` | JWT signing key (minimum 32 characters) |
-| `Discord:ClientId` | `Discord__ClientId` | Discord OAuth2 application client ID |
-| `Discord:ClientSecret` | `Discord__ClientSecret` | Discord OAuth2 application client secret |
-| `Poracle:ApiAddress` | `Poracle__ApiAddress` | PoracleNG API base URL. **Critical** -- all alarm tracking, human/profile management, location, and area operations are proxied through this endpoint. |
-| `Poracle:ApiSecret` | `Poracle__ApiSecret` | PoracleNG API shared secret. Sent as the `X-Poracle-Secret` header on every request. |
-| `Poracle:AdminIds` | `Poracle__AdminIds` | Comma-separated Discord admin user IDs |
+| Setting | `.env` name | `.NET` env variable | Description |
+|---|---|---|---|
+| Database | `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD` | `ConnectionStrings__PoracleDb` | MySQL connection to Poracle database. Short vars are auto-composed into a connection string. |
+| JWT Secret | `JWT_SECRET` | `Jwt__Secret` | JWT signing key (minimum 32 characters) |
+| Discord Client ID | `DISCORD_CLIENT_ID` | `Discord__ClientId` | Discord OAuth2 application client ID |
+| Discord Client Secret | `DISCORD_CLIENT_SECRET` | `Discord__ClientSecret` | Discord OAuth2 application client secret |
+| Poracle API Address | `PORACLE_API_ADDRESS` | `Poracle__ApiAddress` | PoracleNG API base URL. **Critical** -- all alarm tracking, human/profile management, location, and area operations are proxied through this endpoint. |
+| Poracle API Secret | `PORACLE_API_SECRET` | `Poracle__ApiSecret` | PoracleNG API shared secret. Sent as the `X-Poracle-Secret` header on every request. |
+| Admin IDs | `PORACLE_ADMIN_IDS` | `Poracle__AdminIds` | Comma-separated Discord admin user IDs |
 
 ## Optional settings
 
 ### Authentication
 
-| Setting | Env Variable | Default | Description |
-|---|---|---|---|
-| `Jwt:ExpirationMinutes` | `Jwt__ExpirationMinutes` | `1440` | Token expiry (24 hours) |
-| `Discord:BotToken` | `Discord__BotToken` | — | Enables Discord avatar display |
-| `Discord:GuildId` | `Discord__GuildId` | — | Discord server ID |
-| `Discord:GeofenceForumChannelId` | `Discord__GeofenceForumChannelId` | — | Forum channel for geofence submission threads |
-| `Telegram:Enabled` | `Telegram__Enabled` | `false` | Enable Telegram authentication |
-| `Telegram:BotToken` | `Telegram__BotToken` | — | Telegram bot token |
-| `Telegram:BotUsername` | `Telegram__BotUsername` | — | Telegram bot username |
+| Setting | `.env` name | `.NET` env variable | Default | Description |
+|---|---|---|---|---|
+| JWT Expiration | — | `Jwt__ExpirationMinutes` | `1440` | Token expiry (24 hours) |
+| Discord Bot Token | `DISCORD_BOT_TOKEN` | `Discord__BotToken` | — | Enables Discord avatar display |
+| Discord Guild ID | `DISCORD_GUILD_ID` | `Discord__GuildId` | — | Discord server ID |
+| Discord Geofence Forum | `DISCORD_GEOFENCE_FORUM_CHANNEL_ID` | `Discord__GeofenceForumChannelId` | — | Forum channel for geofence submission threads |
+| Telegram Enabled | `TELEGRAM_ENABLED` | `Telegram__Enabled` | `false` | Enable Telegram authentication |
+| Telegram Bot Token | `TELEGRAM_BOT_TOKEN` | `Telegram__BotToken` | — | Telegram bot token |
+| Telegram Bot Username | `TELEGRAM_BOT_USERNAME` | `Telegram__BotUsername` | — | Telegram bot username |
 
 ### Databases
 
-| Setting | Env Variable | Description |
-|---|---|---|
-| `ConnectionStrings:PoracleWebDb` | `ConnectionStrings__PoracleWebDb` | MySQL connection to PoracleWeb database (user geofences). Required for custom geofences feature. |
-| `ConnectionStrings:ScannerDb` | `ConnectionStrings__ScannerDb` | Scanner database connection (RDM). Optional. Used by quest/raid scanner features and the gym picker search in raid/gym add dialogs. |
+| Setting | `.env` name | `.NET` env variable | Description |
+|---|---|---|---|
+| PoracleWeb DB | `WEB_DB_HOST`, `WEB_DB_PORT`, `WEB_DB_NAME`, `WEB_DB_USER`, `WEB_DB_PASSWORD` | `ConnectionStrings__PoracleWebDb` | MySQL connection to PoracleWeb database (site settings, webhook delegates, quick picks, user geofences). Short vars are auto-composed into a connection string. |
+| Scanner DB | `SCANNER_DB_CONNECTION` | `ConnectionStrings__ScannerDb` | Scanner database connection (RDM). Optional. Used by the gym picker search in raid/gym/egg add dialogs. Provide a full connection string. |
 
 ### Koji geofence API
 
 Required for the custom geofences feature.
 
-| Setting | Env Variable | Description |
-|---|---|---|
-| `Koji:ApiAddress` | `Koji__ApiAddress` | Koji geofence server URL (e.g., `http://localhost:8080`) |
-| `Koji:BearerToken` | `Koji__BearerToken` | Koji API bearer token for authentication |
-| `Koji:ProjectId` | `Koji__ProjectId` | Koji project ID for admin-promoted geofences (default: `0`) |
-| `Koji:ProjectName` | `Koji__ProjectName` | Koji project name for `/geofence/poracle/{name}` endpoint |
+| Setting | `.env` name | `.NET` env variable | Description |
+|---|---|---|---|
+| Koji API Address | `KOJI_API_ADDRESS` | `Koji__ApiAddress` | Koji geofence server URL (e.g., `http://localhost:8080`) |
+| Koji Bearer Token | `KOJI_BEARER_TOKEN` | `Koji__BearerToken` | Koji API bearer token for authentication |
+| Koji Project ID | `KOJI_PROJECT_ID` | `Koji__ProjectId` | Koji project ID for admin-promoted geofences (default: `0`) |
+| Koji Project Name | `KOJI_PROJECT_NAME` | `Koji__ProjectName` | Koji project name for `/geofence/poracle/{name}` endpoint |
 
 ### Poracle servers
 
 For remote PoracleJS server management. See [Server Management](../features/server-management.md) for full setup.
 
-| Setting | Env Variable | Description |
-|---|---|---|
-| `Poracle:Servers` | `Poracle__Servers__0__Name`, etc. | Array of PoracleJS server configs (name, host, API address, SSH user) |
-| `Poracle:SshKeyPath` | `Poracle__SshKeyPath` | Path to SSH private key inside container (default `/app/ssh_key`) |
+| Setting | `.env` name | `.NET` env variable | Description |
+|---|---|---|---|
+| Server Config | `PORACLE_SERVER_1_HOST`, `_API`, `_SSH_USER`, `_RESTART_CMD`, `_GROUP_MAP` | `Poracle__Servers__0__Host`, etc. | PoracleJS server configs. Use 1-based numbering in `.env` (auto-converted to 0-based). Up to 10 servers. |
+| SSH Key Path | `PORACLE_SSH_KEY_PATH` | `Poracle__SshKeyPath` | Path to SSH private key inside container (default `/app/ssh_key`) |
 
 ### CORS
 
-| Setting | Env Variable | Description |
-|---|---|---|
-| `Cors:AllowedOrigins` | `Cors__AllowedOrigins__0` | Allowed CORS origin (empty = allow all) |
+| Setting | `.env` name | `.NET` env variable | Description |
+|---|---|---|---|
+| CORS Origin | `CORS_ORIGIN` | `Cors__AllowedOrigins__0` | Allowed CORS origin. Required in production (empty = crash). Not required in development mode. |
 
 ## Configuration sources
 
 | Source | Use case |
 |---|---|
-| `appsettings.Development.json` | Local development (gitignored) |
-| `.env` file | Docker deployment |
-| `docker-compose.yml` | Environment variable mapping |
+| `.env` file (project root) | Both Docker and standalone — the primary config file. Docker Compose reads it natively; standalone mode loads it on startup. Short env var names are auto-translated to .NET format. |
+| `appsettings.json` | Default values. You rarely need to edit this. |
+| `appsettings.Development.json` | Local development overrides (gitignored) |
+| `docker-compose.yml` | Docker-specific config. Also translates `.env` variables — but the app now does this itself too, so standalone mode works identically. |
 | `poracle_web.site_settings` table | Runtime admin-configurable settings (migrated from deprecated `pweb_settings`) |
 
 !!! warning "PoracleNG must be reachable"

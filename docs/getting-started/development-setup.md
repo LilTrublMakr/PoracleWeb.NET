@@ -6,15 +6,27 @@
 git clone https://github.com/PGAN-Dev/PoracleWeb.NET.git
 cd PoracleWeb.NET
 
-# Install frontend dependencies
-cd Applications/Pgan.PoracleWebNet.App/ClientApp
-npm install
-cd ../../..
+# Install frontend dependencies (from root)
+./scripts/dev.sh install
 ```
+
+Or manually: `cd Applications/Pgan.PoracleWebNet.App/ClientApp && npm install`
 
 ## 2. Configure secrets
 
-Create `Applications/Pgan.PoracleWebNet.Api/appsettings.Development.json` (gitignored):
+=== ".env file (recommended)"
+
+    Run the interactive setup to create and configure your `.env` at the project root:
+
+    ```bash
+    ./scripts/setup.sh
+    ```
+
+    The same `.env` format works for development, Docker, and standalone mode. The app auto-translates short variable names (`DB_HOST`, `JWT_SECRET`, etc.) into .NET's configuration format.
+
+=== "appsettings.Development.json"
+
+    Create `Applications/Pgan.PoracleWebNet.Api/appsettings.Development.json` (gitignored):
 
 ```json
 {
@@ -29,7 +41,6 @@ Create `Applications/Pgan.PoracleWebNet.Api/appsettings.Development.json` (gitig
   "Discord": {
     "ClientId": "your_discord_client_id",
     "ClientSecret": "your_discord_client_secret",
-    "RedirectUri": "http://localhost:4200/auth/discord/callback",
     "FrontendUrl": "http://localhost:4200",
     "BotToken": "your_discord_bot_token",
     "GuildId": "your_discord_guild_id",
@@ -59,22 +70,30 @@ Create `Applications/Pgan.PoracleWebNet.Api/appsettings.Development.json` (gitig
 
 ## 3. Run the application
 
-You need two terminals — one for the backend API and one for the Angular dev server:
-
-=== "Backend API"
+=== "Both at once (recommended)"
 
     ```bash
-    cd Applications/Pgan.PoracleWebNet.Api
-    dotnet run
+    ./scripts/dev.sh start
+    ```
+
+    Starts both the API and Angular dev server in one terminal. Output is prefixed with `[api]` and `[app]`. Press Ctrl+C to stop both.
+
+=== "Separate terminals"
+
+    **Backend API:**
+
+    ```bash
+    ./scripts/dev.sh api
+    # or: cd Applications/Pgan.PoracleWebNet.Api && dotnet run
     ```
 
     Starts on **http://localhost:5048**. Swagger/OpenAPI is available in development mode.
 
-=== "Frontend"
+    **Frontend:**
 
     ```bash
-    cd Applications/Pgan.PoracleWebNet.App/ClientApp
-    npm start
+    ./scripts/dev.sh app
+    # or: cd Applications/Pgan.PoracleWebNet.App/ClientApp && npm start
     ```
 
     Starts on **http://localhost:4200**. The Angular dev server proxies API requests to the .NET backend.
@@ -84,42 +103,36 @@ Open **http://localhost:4200** in your browser.
 ## 4. Running tests
 
 ```bash
-# Frontend tests (Jest)
-cd Applications/Pgan.PoracleWebNet.App/ClientApp
-npm test
+# All tests (backend + frontend)
+./scripts/dev.sh test
 
-# Backend tests (xUnit)
-dotnet test
+# Or individually:
+dotnet test                                                    # Backend (xUnit)
+cd Applications/Pgan.PoracleWebNet.App/ClientApp && npm test   # Frontend (Jest)
 ```
 
 ## 5. Linting and formatting
 
 ```bash
+# Check lint + formatting
+./scripts/dev.sh lint
+
+# Or manually:
 cd Applications/Pgan.PoracleWebNet.App/ClientApp
-
-# Check lint
-npm run lint
-
-# Check formatting
-npm run prettier-check
-
-# Auto-fix lint issues
-npx eslint --fix src/
-
-# Auto-format code
-npm run prettier-format
+npm run lint             # ESLint check
+npm run prettier-check   # Prettier check
+npx eslint --fix src/    # Auto-fix lint issues
+npm run prettier-format  # Auto-format code
 ```
 
 ## Build commands
 
 ```bash
-# Build entire solution (from solution root)
-dotnet build
+# Full production build (API + Angular, outputs to ./publish)
+./scripts/dev.sh build
 
-# Angular production build
-cd Applications/Pgan.PoracleWebNet.App/ClientApp
-npm run build
-
-# Angular watch mode
-npm run watch
+# Or manually:
+dotnet build                                                          # Build .NET solution
+cd Applications/Pgan.PoracleWebNet.App/ClientApp && npm run build     # Angular production build
+cd Applications/Pgan.PoracleWebNet.App/ClientApp && npm run watch     # Angular watch mode
 ```

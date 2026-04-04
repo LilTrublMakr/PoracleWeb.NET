@@ -66,6 +66,11 @@ Pgan.PoracleWebNet.slnx
 |                                geofence-approval-dialog, gym-picker
 |                                utils/: geo.utils (point-in-polygon, centroid)
 |
++-- scripts/
+|   +-- setup.sh                 Interactive first-time setup wizard
+|   +-- dev.sh                   Dev convenience commands (install, api, app, start, test, lint, build, db:create, db:migrate)
+|   +-- docker.sh                Docker convenience commands (build, start, stop, logs, update, clean)
+|
 +-- Tests/
     +-- Pgan.PoracleWebNet.Tests/  xUnit backend tests (controllers, services, mappings)
 ```
@@ -224,20 +229,21 @@ Pgan.PoracleWebNet.slnx
 
 ## Configuration
 
-- **Secrets**: `appsettings.Development.json` (gitignored) holds all connection strings, JWT secret, Discord/Telegram credentials, Poracle API address/secret.
-- **Docker**: Environment variables configured in `.env` file, mapped in `docker-compose.yml`.
+- **Unified `.env` file**: A single `.env` file (copied from `.env.example`) configures PoracleWeb for both Docker and standalone mode. `Program.cs` loads `.env` at startup, bridges short env var names (e.g., `JWT_SECRET`, `DISCORD_CLIENT_ID`) to .NET's `__` convention (e.g., `Jwt__Secret`, `Discord__ClientId`), and auto-composes MySQL connection strings from `DB_HOST`/`DB_PORT`/`DB_NAME`/`DB_USER`/`DB_PASSWORD` (and `WEB_DB_*` for the PoracleWeb DB). Docker Compose also reads `.env` natively; the Program.cs bridge covers the standalone (`dotnet run`) case.
+- **Env var bridge** (in `Program.cs`): Maps ~19 short env var names to .NET config paths. Also maps `PORACLE_SERVER_N_*` vars (1-based) to `Poracle__Servers__N__*` (0-based). Two static helpers at the end of Program.cs: `MapEnvVar()` and `ComposeConnectionString()`.
+- **`appsettings.Development.json`** (gitignored) can still be used for overrides, but `.env` is the primary configuration mechanism.
 - **Poracle API** (critical for all writes): `Poracle:ApiAddress` and `Poracle:ApiSecret` are required for the application to function. All alarm CRUD, human/profile management, area updates, and profile switches are proxied through the PoracleNG REST API. If the API is unreachable, all alarm, human, and profile operations will fail (no DB fallback). (**Deprecated**: previously also read from the `pweb_settings` table in the Poracle DB; now stored in `poracle_web.site_settings`.)
 - **Site Settings**: Admin-configurable settings (custom title, feature flags, etc.) are stored in `poracle_web.site_settings`. On first startup after upgrade, `SettingsMigrationStartupService` migrates any existing data from the deprecated `pweb_settings` table automatically.
 - **Discord Bot Token**: Sourced from PoracleJS server's `config/local-discord.json`.
 - **Admin IDs**: Comma-separated Discord user IDs in `Poracle:AdminIds`.
-- **PoracleWeb DB**: `ConnectionStrings:PoracleWebDb` -- connection string for the `poracle_web` database (user geofences, site settings, webhook delegates, quick picks).
+- **PoracleWeb DB**: `ConnectionStrings:PoracleWebDb` -- connection string for the `poracle_web` database (user geofences, site settings, webhook delegates, quick picks). Auto-composed by `Program.cs` from `WEB_DB_HOST`, `WEB_DB_PORT`, `WEB_DB_NAME`, `WEB_DB_USER`, `WEB_DB_PASSWORD` env vars when the full connection string is not set.
 - **Koji Geofence API**:
   - `Koji:ApiAddress` -- Koji geofence server URL (e.g., `http://localhost:8080`).
   - `Koji:BearerToken` -- Koji API authentication token.
   - `Koji:ProjectId` -- Koji project ID for admin-promoted geofences.
   - `Koji:ProjectName` -- Koji project name used for the `/geofence/poracle/{name}` endpoint to fetch admin geofences. Settings class: `KojiSettings`.
 - **Discord Geofence Forum**: `Discord:GeofenceForumChannelId` -- Discord forum channel ID where geofence submission threads are created.
-- **Poracle Servers**: `Poracle:Servers` -- array of PoracleJS server configs (name, host, API address, SSH user) for multi-server management.
+- **Poracle Servers**: `Poracle:Servers` -- array of PoracleJS server configs (name, host, API address, SSH user) for multi-server management. Also configurable via `PORACLE_SERVER_N_*` env vars in `.env` (1-based indexing, bridged to 0-based by `Program.cs`; supports up to 10 servers).
 - **SSH Key Path**: `Poracle:SshKeyPath` -- path to SSH private key inside the container (default `/app/ssh_key`).
 - **PoracleJS config**: `geofence.path` in PoracleJS config is a single URL pointing to the PoracleWeb unified feed endpoint (e.g., `"http://poracleweb:8082/api/geofence-feed"`). PoracleWeb fetches admin geofences from Koji internally and merges them with user geofences.
 
@@ -297,6 +303,34 @@ Webhook IDs in Poracle are URLs (e.g., `http://host:port/path`). When constructi
 
 ## Build & Run
 
+### Using convenience scripts (recommended)
+
+```bash
+# First-time setup (interactive wizard)
+./scripts/setup.sh
+
+# Development
+./scripts/dev.sh install            # Install frontend (npm) dependencies
+./scripts/dev.sh api                # Start .NET API (http://localhost:5048)
+./scripts/dev.sh app                # Start Angular dev server (http://localhost:4200)
+./scripts/dev.sh start              # Start both API + Angular in parallel
+./scripts/dev.sh test               # Run all tests (backend + frontend)
+./scripts/dev.sh lint               # Run ESLint + Prettier checks
+./scripts/dev.sh build              # Production build (API + Angular → publish/)
+./scripts/dev.sh db:create          # Create the poracle_web database
+./scripts/dev.sh db:migrate <Name>  # Add a new EF Core migration
+
+# Docker
+./scripts/docker.sh build           # Build Docker image
+./scripts/docker.sh start           # Start containers
+./scripts/docker.sh stop            # Stop containers
+./scripts/docker.sh logs            # Tail container logs
+./scripts/docker.sh update          # Rebuild and recreate
+./scripts/docker.sh clean           # No-cache rebuild
+```
+
+### Manual commands
+
 ```bash
 # Build entire solution (from solution root)
 dotnet build
@@ -350,37 +384,35 @@ dotnet ef migrations script \
 
 ## Development Setup
 
-1. **Clone the repo** and copy `.env.example` to `.env`, fill in database credentials and Discord/Telegram secrets.
-2. **Create the `poracle_web` database** in MariaDB/MySQL (empty — tables are created automatically):
+1. **Clone the repo** and either run `./scripts/setup.sh` (interactive wizard) or manually copy `.env.example` to `.env` and fill in your values.
+2. **Create the `poracle_web` database** — run `./scripts/dev.sh db:create`, or manually:
    ```sql
    CREATE DATABASE poracle_web CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
    ```
-3. **Configure connection strings** in `appsettings.Development.json` (gitignored):
-   - `ConnectionStrings:PoracleDb` — the Poracle database (managed by PoracleJS)
-   - `ConnectionStrings:PoracleWebDb` — the `poracle_web` database (owned by this app)
-4. **Run the app** — `dotnet run` from `Applications/Pgan.PoracleWebNet.Api`. On first startup:
-   - `MigrateAsync()` applies all pending EF Core migrations, creating the `poracle_web` tables
-   - `SettingsMigrationStartupService` migrates data from the old `pweb_settings` table (if any exists)
-5. **Run the Angular dev server** — `npm start` from `ClientApp/` (proxies API calls to the .NET backend)
+3. **Configuration**: All settings are read from `.env` at the project root. `Program.cs` loads the file, bridges short env var names to .NET config paths, and auto-composes MySQL connection strings from the `DB_*` / `WEB_DB_*` variables. You can also use `appsettings.Development.json` (gitignored) for overrides if preferred.
+4. **Run the app** — `./scripts/dev.sh start` (runs both API + Angular), or individually:
+   - `./scripts/dev.sh api` — starts the .NET API on http://localhost:5048
+   - `./scripts/dev.sh app` — starts the Angular dev server on http://localhost:4200
+   - On first startup, `MigrateAsync()` applies pending EF Core migrations and `SettingsMigrationStartupService` migrates data from the old `pweb_settings` table (if any exists).
 
 ### Adding new PoracleWeb tables
 1. Add the entity class to `Data/Pgan.PoracleWebNet.Data/Entities/`
 2. Add a `DbSet<>` to `PoracleWebContext`
 3. Optionally add an `IEntityTypeConfiguration<>` in `Data/Configurations/`
-4. Create a migration: `dotnet ef migrations add <Name> --context PoracleWebContext --project Data/Pgan.PoracleWebNet.Data --startup-project Applications/Pgan.PoracleWebNet.Api --output-dir Migrations/PoracleWeb`
+4. Create a migration: `./scripts/dev.sh db:migrate <Name>` (or manually: `dotnet ef migrations add <Name> --context PoracleWebContext --project Data/Pgan.PoracleWebNet.Data --startup-project Applications/Pgan.PoracleWebNet.Api --output-dir Migrations/PoracleWeb`)
 5. The migration applies automatically on next app startup via `MigrateAsync()`
 
 ## Production Setup (Docker)
 
-1. **Build the image**: `docker build -t poracleweb.net:latest .`
-2. **Configure `.env`** with production values (DB hosts, secrets, Koji API, Discord bot token)
+1. **Build the image**: `./scripts/docker.sh build` (or `docker build -t poracleweb.net:latest .`)
+2. **Configure `.env`** with production values (DB hosts, secrets, Koji API, Discord bot token). The same `.env` format works for both Docker and standalone — `Program.cs` bridges the env vars at startup.
 3. **Ensure the `poracle_web` database exists** in MariaDB/MySQL (tables are created automatically on startup)
-4. **Start**: `docker compose up -d`
+4. **Start**: `./scripts/docker.sh start` (or `docker compose up -d`)
 5. **On first start**, the app will:
    - Run EF Core migrations to create all `poracle_web` tables
    - Migrate settings data from `pweb_settings` (Poracle DB) to the new structured tables
 6. **Subsequent starts** skip both steps (migrations already applied, sentinel key set)
-7. **Updates**: `docker build -t poracleweb.net:latest . && docker compose up -d --force-recreate`
+7. **Updates**: `./scripts/docker.sh update` (or `docker build -t poracleweb.net:latest . && docker compose up -d --force-recreate`)
    - New migrations (if any) apply automatically on startup
 
 ## Code Style
@@ -460,6 +492,7 @@ dotnet ef migrations script \
 | Abstractions | `Core/Pgan.PoracleWebNet.Core.Abstractions/` |
 | Backend Tests | `Tests/Pgan.PoracleWebNet.Tests/` |
 | CI Workflows | `.github/workflows/` (ci.yml, docker-publish.yml) |
+| Scripts | `scripts/` (`setup.sh`, `dev.sh`, `docker.sh`) |
 | Docker Config | `Dockerfile`, `docker-compose.yml`, `.env.example` |
 
 ## Testing

@@ -52,9 +52,11 @@ A web application for managing Pokemon GO notification alarms through the Poracl
 
     ---
 
-    Get up and running with Docker or a development environment
+    Get up and running with Docker, standalone, or a development environment
 
-    [:octicons-arrow-right-24: Quick Start](getting-started/quick-start.md)
+    [:octicons-arrow-right-24: Quick Start (Docker)](getting-started/quick-start.md)
+
+    [:octicons-arrow-right-24: Standalone Setup (no Docker)](getting-started/standalone-setup.md)
 
 -   :material-cog:{ .lg .middle } **Configuration**
 

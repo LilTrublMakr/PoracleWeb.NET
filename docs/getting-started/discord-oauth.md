@@ -10,8 +10,10 @@ PoracleWeb uses Discord OAuth2 for user authentication. This page walks through 
 
     | Environment | Redirect URI |
     |---|---|
-    | Production | `http://your-domain:8082/auth/discord/callback` |
-    | Development | `http://localhost:4200/auth/discord/callback` |
+    | Production / Docker | `http://your-domain:8082/api/auth/discord/callback` |
+    | Development | `http://localhost:5048/api/auth/discord/callback` |
+
+    The redirect URI must point to the **API server** (not the Angular dev server). In production, both are served from the same origin. In development, the API runs on port 5048.
 
 4. Copy the **Client ID** and **Client Secret**
 
@@ -38,7 +40,9 @@ If using the geofence submission feature with Discord forum integration, the bot
 
 ## Configuration
 
-=== "Docker (.env)"
+=== ".env file"
+
+    These values are set during `./scripts/setup.sh`, or you can edit `.env` directly:
 
     ```env
     DISCORD_CLIENT_ID=your_discord_client_id
@@ -55,7 +59,6 @@ If using the geofence submission feature with Discord forum integration, the bot
       "Discord": {
         "ClientId": "your_discord_client_id",
         "ClientSecret": "your_discord_client_secret",
-        "RedirectUri": "http://localhost:4200/auth/discord/callback",
         "FrontendUrl": "http://localhost:4200",
         "BotToken": "your_discord_bot_token",
         "GuildId": "your_discord_guild_id",

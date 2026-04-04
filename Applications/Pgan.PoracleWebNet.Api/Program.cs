@@ -10,6 +10,105 @@ using Pgan.PoracleWebNet.Api.Configuration;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Load .env file from the working directory (if present).
+// This lets both Docker and standalone users configure via a single .env file at the project root.
+// Docker Compose loads .env natively; this covers the standalone (dotnet run / dotnet dll) case.
+var envFile = Path.Combine(Directory.GetCurrentDirectory(), ".env");
+if (File.Exists(envFile))
+{
+    foreach (var line in File.ReadAllLines(envFile))
+    {
+        var trimmed = line.Trim();
+        if (trimmed.Length == 0 || trimmed.StartsWith('#'))
+            continue;
+
+        var eqIndex = trimmed.IndexOf('=');
+        if (eqIndex <= 0)
+            continue;
+
+        var key = trimmed[..eqIndex].Trim();
+        var value = trimmed[(eqIndex + 1)..].Trim();
+
+        // Don't override variables that are already set in the environment
+        if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable(key)))
+        {
+            Environment.SetEnvironmentVariable(key, value);
+        }
+    }
+
+    // Reload configuration so builder.Configuration picks up the new env vars
+    builder.Configuration.AddEnvironmentVariables();
+}
+
+// Bridge short env var names (from .env) to .NET's __ convention.
+// Docker Compose does this translation in docker-compose.yml; this makes the same .env work standalone.
+MapEnvVar("JWT_SECRET", "Jwt__Secret");
+MapEnvVar("DISCORD_CLIENT_ID", "Discord__ClientId");
+MapEnvVar("DISCORD_CLIENT_SECRET", "Discord__ClientSecret");
+MapEnvVar("DISCORD_BOT_TOKEN", "Discord__BotToken");
+MapEnvVar("DISCORD_GUILD_ID", "Discord__GuildId");
+MapEnvVar("DISCORD_GEOFENCE_FORUM_CHANNEL_ID", "Discord__GeofenceForumChannelId");
+MapEnvVar("TELEGRAM_ENABLED", "Telegram__Enabled");
+MapEnvVar("TELEGRAM_BOT_TOKEN", "Telegram__BotToken");
+MapEnvVar("TELEGRAM_BOT_USERNAME", "Telegram__BotUsername");
+MapEnvVar("PORACLE_API_ADDRESS", "Poracle__ApiAddress");
+MapEnvVar("PORACLE_API_SECRET", "Poracle__ApiSecret");
+MapEnvVar("PORACLE_ADMIN_IDS", "Poracle__AdminIds");
+MapEnvVar("PORACLE_SSH_KEY_PATH", "Poracle__SshKeyPath");
+MapEnvVar("KOJI_API_ADDRESS", "Koji__ApiAddress");
+MapEnvVar("KOJI_BEARER_TOKEN", "Koji__BearerToken");
+MapEnvVar("KOJI_PROJECT_ID", "Koji__ProjectId");
+MapEnvVar("KOJI_PROJECT_NAME", "Koji__ProjectName");
+MapEnvVar("CORS_ORIGIN", "Cors__AllowedOrigins__0");
+MapEnvVar("SCANNER_DB_CONNECTION", "ConnectionStrings__ScannerDb");
+
+// Map Poracle server env vars (PORACLE_SERVER_N_*) to Poracle__Servers__N__*
+for (var i = 1; i <= 10; i++)
+{
+    var idx = i - 1; // .env uses 1-based, .NET config uses 0-based
+    var host = Environment.GetEnvironmentVariable($"PORACLE_SERVER_{i}_HOST");
+    if (string.IsNullOrEmpty(host))
+        continue;
+
+    MapEnvVar($"PORACLE_SERVER_{i}_HOST", $"Poracle__Servers__{idx}__Host");
+    MapEnvVar($"PORACLE_SERVER_{i}_API", $"Poracle__Servers__{idx}__ApiAddress");
+    MapEnvVar($"PORACLE_SERVER_{i}_SSH_USER", $"Poracle__Servers__{idx}__SshUser");
+    MapEnvVar($"PORACLE_SERVER_{i}_RESTART_CMD", $"Poracle__Servers__{idx}__RestartCommand");
+    MapEnvVar($"PORACLE_SERVER_{i}_GROUP_MAP", $"Poracle__Servers__{idx}__GroupMapPath");
+
+    // Set server name default if not already set
+    var nameKey = $"Poracle__Servers__{idx}__Name";
+    if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable(nameKey)))
+        Environment.SetEnvironmentVariable(nameKey, i == 1 ? "Main" : $"Server {i}");
+}
+
+// Auto-compose MySQL connection strings from short env vars (DB_HOST, DB_PORT, etc.)
+// so the same .env works for both Docker Compose and standalone mode.
+ComposeConnectionString("PoracleDb", "DB_HOST", "DB_PORT", "DB_NAME", "DB_USER", "DB_PASSWORD", "poracle");
+ComposeConnectionString("PoracleWebDb", "WEB_DB_HOST", "WEB_DB_PORT", "WEB_DB_NAME", "WEB_DB_USER", "WEB_DB_PASSWORD", "poracle_web");
+
+// Reload configuration after env var bridging
+builder.Configuration.AddEnvironmentVariables();
+
+// Configurable port — checked in order: ASPNETCORE_URLS (Docker), PORT env var, Server:Port config, CLI arg
+// ASPNETCORE_URLS takes highest precedence (set by Docker); PORT is the simple .env-friendly option.
+if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable("ASPNETCORE_URLS")))
+{
+    var portEnv = Environment.GetEnvironmentVariable("PORT");
+    if (!string.IsNullOrEmpty(portEnv) && int.TryParse(portEnv, out var envPort))
+    {
+        builder.WebHost.UseUrls($"http://+:{envPort}");
+    }
+    else
+    {
+        var port = builder.Configuration.GetValue<int?>("Server:Port");
+        if (port.HasValue)
+        {
+            builder.WebHost.UseUrls($"http://+:{port.Value}");
+        }
+    }
+}
+
 // Startup config validation — fail fast if critical settings are missing
 var poracleDb = builder.Configuration.GetConnectionString("PoracleDb");
 if (string.IsNullOrWhiteSpace(poracleDb))
@@ -237,6 +336,37 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.Run();
+
+// Maps a short env var name to .NET's __ convention if the target is not already set.
+static void MapEnvVar(string shortName, string configName)
+{
+    var value = Environment.GetEnvironmentVariable(shortName);
+    if (!string.IsNullOrEmpty(value) && string.IsNullOrEmpty(Environment.GetEnvironmentVariable(configName)))
+    {
+        Environment.SetEnvironmentVariable(configName, value);
+    }
+}
+
+// Composes a MySQL connection string from individual DB_HOST/DB_PORT/etc. env vars
+// when the full ConnectionStrings__* env var is not already set.
+static void ComposeConnectionString(string name, string hostVar, string portVar, string dbVar, string userVar, string passVar, string defaultDb)
+{
+    var csKey = $"ConnectionStrings__{name}";
+    if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable(csKey)))
+        return;
+
+    var host = Environment.GetEnvironmentVariable(hostVar);
+    var pass = Environment.GetEnvironmentVariable(passVar);
+    if (string.IsNullOrEmpty(host) || string.IsNullOrEmpty(pass))
+        return;
+
+    var port = Environment.GetEnvironmentVariable(portVar) ?? "3306";
+    var db = Environment.GetEnvironmentVariable(dbVar) ?? defaultDb;
+    var user = Environment.GetEnvironmentVariable(userVar) ?? "root";
+
+    Environment.SetEnvironmentVariable(csKey,
+        $"Server={host};Port={port};Database={db};User={user};Password={pass};AllowZeroDateTime=true;ConvertZeroDateTime=true");
+}
 
 internal static partial class StartupLog
 {

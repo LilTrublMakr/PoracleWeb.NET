@@ -72,6 +72,7 @@ nav:
   - Home: index.md
   - Getting Started:
       - Quick Start (Docker): getting-started/quick-start.md
+      - Standalone Setup (no Docker): getting-started/standalone-setup.md
       - Development Setup: getting-started/development-setup.md
       - Discord OAuth2: getting-started/discord-oauth.md
   - Configuration:
