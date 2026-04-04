@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.1.0] - 2026-04-03
+
+### Added
+- **Unified `.env` configuration**: Program.cs env var bridge auto-translates short env var names (`DB_HOST`, `JWT_SECRET`, `DISCORD_CLIENT_ID`, etc.) to .NET's `__` convention and auto-composes MySQL connection strings from `DB_HOST`/`DB_PORT`/`DB_NAME`/`DB_USER`/`DB_PASSWORD`. The same `.env` file now works for Docker, standalone, and development mode. ([#98](https://github.com/PGAN-Dev/PoracleWeb.NET/issues/98))
+- **Root-level convenience scripts**: `scripts/setup.sh` (interactive first-time setup with JWT generation and DB creation), `scripts/dev.sh` (install, api, app, start, test, lint, build, db:create, db:migrate), `scripts/docker.sh` (build, start, stop, logs, update, clean) — no more navigating deep subdirectories ([#99](https://github.com/PGAN-Dev/PoracleWeb.NET/issues/99))
+- **Standalone setup guide**: new `docs/getting-started/standalone-setup.md` with systemd, pm2, and Windows service instructions ([#102](https://github.com/PGAN-Dev/PoracleWeb.NET/issues/102))
+
+### Changed
+- `.env.example` restructured with clear section headers, `localhost` defaults (docker-compose.yml retains its own `host.docker.internal` fallback), and Docker vs standalone host guidance ([#100](https://github.com/PGAN-Dev/PoracleWeb.NET/issues/100))
+- Configuration reference tables now show both `.env` short names and `.NET` `__` names for all settings ([#101](https://github.com/PGAN-Dev/PoracleWeb.NET/issues/101))
+- All getting-started and configuration docs updated with script references and unified `.env` approach ([#101](https://github.com/PGAN-Dev/PoracleWeb.NET/issues/101))
+
+### Fixed
+- `DB_PORT` default mismatch: `docker-compose.yml` defaulted to `3309` while `.env.example` and Program.cs used `3306` — now consistent at `3306` ([#100](https://github.com/PGAN-Dev/PoracleWeb.NET/issues/100))
+- `CORS_ORIGIN` missing from `.env.example` — required in production but was undocumented, causing startup crashes ([#100](https://github.com/PGAN-Dev/PoracleWeb.NET/issues/100))
+- Stale `Discord__RedirectUri` reference in standalone troubleshooting docs ([#101](https://github.com/PGAN-Dev/PoracleWeb.NET/issues/101))
+- Docker docs Poracle config mount path `/app/poracle-config` corrected to `/poracle-config` ([#101](https://github.com/PGAN-Dev/PoracleWeb.NET/issues/101))
+
 ## [2.0.0] - 2026-04-01
 
 ### Added
@@ -327,7 +345,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Rate limiting (per-IP) on auth endpoints
 - Docker deployment with Watchtower auto-updates
 
-[Unreleased]: https://github.com/PGAN-Dev/PoracleWeb.NET/compare/v1.3.1...HEAD
+[Unreleased]: https://github.com/PGAN-Dev/PoracleWeb.NET/compare/v2.1.0...HEAD
+[2.1.0]: https://github.com/PGAN-Dev/PoracleWeb.NET/compare/v2.0.0...v2.1.0
+[2.0.0]: https://github.com/PGAN-Dev/PoracleWeb.NET/compare/v1.3.1...v2.0.0
 [1.3.1]: https://github.com/PGAN-Dev/PoracleWeb.NET/compare/v1.3.0...v1.3.1
 [1.3.0]: https://github.com/PGAN-Dev/PoracleWeb.NET/compare/v1.1.2...v1.3.0
 [1.2.0]: https://github.com/PGAN-Dev/PoracleWeb.NET/compare/v1.1.1...v1.2.0
