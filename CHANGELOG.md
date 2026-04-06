@@ -8,7 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
-- raid alarm card shows 9000 stars for level 9000 ([PR #144](https://github.com/PGAN-Dev/PoracleWeb.NET/pull/144))
+- **Raid card 9000 stars**: Guard `getLevelStars()` for sentinel value 9000, show "Any Level" label. Use descriptive level names (Level 6 → "Mega"). Show "All Raids" / "All Mega Raids" for level-based alarms. ([#138](https://github.com/PGAN-Dev/PoracleWeb.NET/issues/138), [PR #144](https://github.com/PGAN-Dev/PoracleWeb.NET/pull/144))
+- **Quick pick raid level override**: PoracleNG treats `pokemon_id=0` as "everything" and overrides level filters. Quick pick now uses `pokemon_id=9000` to preserve level-based filtering (e.g., "All Mega Raids" correctly creates level 6 alarms). ([PR #144](https://github.com/PGAN-Dev/PoracleWeb.NET/pull/144))
 
 ### Added
 - **Max Battles quick pick support**: Admins can create Max Battle quick pick templates. All-levels mode creates 7 alarms (levels 1-5 Dynamax, 7-8 Gigantamax). Added maxbattle alarm type, category, and form fields to the admin quick pick dialog. ([#140](https://github.com/PGAN-Dev/PoracleWeb.NET/issues/140), [PR #143](https://github.com/PGAN-Dev/PoracleWeb.NET/pull/143))
