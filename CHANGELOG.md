@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- cross-profile alarm overview with profile management ([PR #147](https://github.com/PGAN-Dev/PoracleWeb.NET/pull/147))
+
 ### Fixed
 - **Raid card 9000 stars**: Guard `getLevelStars()` for sentinel value 9000, show "Any Level" label. Use descriptive level names (Level 6 → "Mega"). Show "All Raids" / "All Mega Raids" for level-based alarms. ([#138](https://github.com/PGAN-Dev/PoracleWeb.NET/issues/138), [PR #144](https://github.com/PGAN-Dev/PoracleWeb.NET/pull/144))
 - **Quick pick raid level override**: PoracleNG treats `pokemon_id=0` as "everything" and overrides level filters. Quick pick now uses `pokemon_id=9000` to preserve level-based filtering (e.g., "All Mega Raids" correctly creates level 6 alarms). ([PR #144](https://github.com/PGAN-Dev/PoracleWeb.NET/pull/144))
