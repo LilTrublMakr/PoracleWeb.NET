@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [2.2.0] - 2026-04-07
 
+## [2.2.0] - 2026-04-07
+
 ### Added
 - **Max Battle (Dynamax) tracking alarms**: Full-stack alarm module for Dynamax and Gigantamax Max Battle tracking at Power Spots, proxied through PoracleNG's `maxbattle` CRUD API. Includes list page with card grid, add dialog (By Level / By Pokemon tabs), edit dialog, dashboard card, cleaning toggle, and admin feature flag (`disable_maxbattles`). Levels follow PoracleNG's system: 1-5 (Dynamax), 7 (Gigantamax), 8 (Legendary Gigantamax). Uses delete-then-create update pattern for PoracleNG's insert-only maxbattle handler. ([#118](https://github.com/PGAN-Dev/PoracleWeb.NET/issues/118), [PR #137](https://github.com/PGAN-Dev/PoracleWeb.NET/pull/137))
 - **Gigantamax-only toggle**: Pokemon-based max battle alarms can filter to only Gigantamax battles, mirroring PoracleNG's `!maxbattle <pokemon> gmax` command ([PR #137](https://github.com/PGAN-Dev/PoracleWeb.NET/pull/137))
@@ -392,7 +394,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Rate limiting (per-IP) on auth endpoints
 - Docker deployment with Watchtower auto-updates
 
-[Unreleased]: https://github.com/PGAN-Dev/PoracleWeb.NET/compare/v2.1.3...HEAD
+[Unreleased]: https://github.com/PGAN-Dev/PoracleWeb.NET/compare/v2.2.0...HEAD
+[2.2.0]: https://github.com/PGAN-Dev/PoracleWeb.NET/compare/v2.1.3...v2.2.0
 [2.1.3]: https://github.com/PGAN-Dev/PoracleWeb.NET/compare/v2.1.2...v2.1.3
 [2.1.3]: https://github.com/PGAN-Dev/PoracleWeb.NET/compare/v2.1.2...v2.1.3
 [2.1.2]: https://github.com/PGAN-Dev/PoracleWeb.NET/compare/v2.1.1...v2.1.2
