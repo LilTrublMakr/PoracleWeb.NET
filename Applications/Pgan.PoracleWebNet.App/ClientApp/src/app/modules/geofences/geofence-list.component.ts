@@ -10,7 +10,7 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { firstValueFrom } from 'rxjs';
 
-import { AreaDefinition, GeofenceData, GeofenceRegion, UserGeofence } from '../../core/models';
+import { AreaDefinition, GeoJsonImportResult, GeofenceData, GeofenceRegion, UserGeofence } from '../../core/models';
 import { AreaService } from '../../core/services/area.service';
 import { UserGeofenceService } from '../../core/services/user-geofence.service';
 import { AreaMapComponent } from '../../shared/components/area-map/area-map.component';
@@ -20,6 +20,15 @@ import {
   GeofenceNameDialogData,
   GeofenceNameDialogResult,
 } from '../../shared/components/geofence-name-dialog/geofence-name-dialog.component';
+import {
+  GeoJsonExportDialogComponent,
+  GeoJsonExportDialogData,
+  GeoJsonExportDialogResult,
+} from '../../shared/components/geojson-export-dialog/geojson-export-dialog.component';
+import {
+  GeoJsonImportDialogComponent,
+  GeoJsonImportDialogData,
+} from '../../shared/components/geojson-import-dialog/geojson-import-dialog.component';
 import { RegionOption } from '../../shared/components/region-selector/region-selector.component';
 import { detectRegion } from '../../shared/utils/geo.utils';
 
@@ -183,6 +192,24 @@ export class GeofenceListComponent implements OnInit {
     });
   }
 
+  exportGeoJson(): void {
+    const geofences = this.customGeofences().filter(g => g.polygon && g.polygon.length > 0);
+    if (geofences.length === 0) {
+      this.snackBar.open('No geofences to export', 'OK', { duration: 3000 });
+      return;
+    }
+
+    const ref = this.dialog.open(GeoJsonExportDialogComponent, {
+      width: '480px',
+      data: { geofences } as GeoJsonExportDialogData,
+    });
+
+    ref.afterClosed().subscribe((result: GeoJsonExportDialogResult | null) => {
+      if (!result || result.selected.length === 0) return;
+      this.downloadGeoJson(result.selected);
+    });
+  }
+
   ngOnInit(): void {
     this.loadActiveAreas();
     this.loadCustomGeofences();
@@ -249,6 +276,26 @@ export class GeofenceListComponent implements OnInit {
     }
   }
 
+  openImportDialog(): void {
+    const ref = this.dialog.open(GeoJsonImportDialogComponent, {
+      width: '600px',
+      data: {
+        currentGeofenceCount: this.customGeofences().length,
+        existingNames: this.customGeofences().map(g => g.displayName),
+        maxGeofences: MAX_CUSTOM_GEOFENCES,
+        regions: this.geofenceRegions(),
+      } as GeoJsonImportDialogData,
+    });
+
+    ref.afterClosed().subscribe((result: GeoJsonImportResult | null) => {
+      if (result && result.created.length > 0) {
+        this.loadCustomGeofences();
+        this.loadActiveAreas();
+        this.snackBar.open(`Imported ${result.created.length} geofence(s)`, 'OK', { duration: 3000 });
+      }
+    });
+  }
+
   async submitGeofence(geofence: UserGeofence): Promise<void> {
     const ref = this.dialog.open(ConfirmDialogComponent, {
       data: {
@@ -309,6 +356,33 @@ export class GeofenceListComponent implements OnInit {
         });
       },
     });
+  }
+
+  private downloadGeoJson(geofences: UserGeofence[]): void {
+    const features = geofences
+      .filter(g => g.polygon && g.polygon.length > 0)
+      .map(g => {
+        // Convert [lat, lon] to GeoJSON [lon, lat] and close ring
+        const ring = g.polygon!.map(([lat, lon]) => [lon, lat]);
+        if (ring.length >= 2 && (ring[0][0] !== ring[ring.length - 1][0] || ring[0][1] !== ring[ring.length - 1][1])) {
+          ring.push([ring[0][0], ring[0][1]]);
+        }
+        return {
+          geometry: { coordinates: [ring], type: 'Polygon' },
+          properties: { name: g.displayName, group: g.groupName },
+          type: 'Feature',
+        };
+      });
+
+    const geoJson = JSON.stringify({ features, type: 'FeatureCollection' }, null, 2);
+    const blob = new Blob([geoJson], { type: 'application/geo+json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'geofences.geojson';
+    a.click();
+    URL.revokeObjectURL(url);
+    this.snackBar.open(`Exported ${features.length} geofence(s)`, 'OK', { duration: 3000 });
   }
 
   private loadActiveAreas(): void {
