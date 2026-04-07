@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- quest test alerts missing static maps ([PR #153](https://github.com/PGAN-Dev/PoracleWeb.NET/pull/153))
+
 ### Added
 - Pokemon availability indicators from Golbat ([PR #154](https://github.com/PGAN-Dev/PoracleWeb.NET/pull/154))
 - **Pokemon availability indicators from Golbat**: Pokemon selector shows which species are currently spawning via Golbat's availability API. "Live > Spawning" filter toggle in the selector filters to only active species with available-first sorting. Green dot indicators on autocomplete options and tile grid. Availability data cached server-side (5-min IMemoryCache TTL) with stale fallback. Feature is automatically enabled when Golbat API is configured (`GOLBAT_API_ADDRESS`), hidden when not. New `IGolbatApiProxy` / `GolbatApiProxy` HttpClient service, `IPokemonAvailabilityService` with `IMemoryCache` caching, `PokemonAvailabilityController` with nullable DI for feature-flag gating. Frontend `PokemonAvailabilityService` (signal-based, 5-min auto-refresh). ([#133](https://github.com/PGAN-Dev/PoracleWeb.NET/issues/133))
