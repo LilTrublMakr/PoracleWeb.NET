@@ -7,9 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-
 ### Added
-- Multi-language / i18n support (11 languages) ([PR #162](https://github.com/PGAN-Dev/PoracleWeb.NET/pull/162))
+- **Multi-language / i18n support (11 languages)**: Full internationalization of the entire UI matching the original PoracleWeb PHP language set — English, French, German, Spanish, Dutch, Italian, Portuguese, Brazilian Portuguese, Polish, Danish, Swedish. Runtime language switching via ngx-translate with no page reload. Browser language auto-detection on first visit. SVG country flag icons in the language selector menu. Admin `allowed_languages` site setting to restrict available languages. All 17 help guide sections translated with rich HTML content. Amber "English" fallback chip on untranslated sections. "Help improve translations" CTA for non-English users. 1,121 translation keys per language (12,331 total translated strings). I18nService with browser detection, localStorage persistence, computed signal reactivity, and admin-controlled filtering. ([#161](https://github.com/PGAN-Dev/PoracleWeb.NET/issues/161), [PR #162](https://github.com/PGAN-Dev/PoracleWeb.NET/pull/162))
+- **Shared pipes i18n**: League name, gender display, lure name, team name, and distance display pipes now use I18nService for translated output ([PR #162](https://github.com/PGAN-Dev/PoracleWeb.NET/pull/162))
+- **Admin settings i18n**: All admin setting group labels and descriptions are translatable (106 keys in ADMIN_SETTINGS namespace) ([PR #162](https://github.com/PGAN-Dev/PoracleWeb.NET/pull/162))
+- **I18nService unit tests**: 11 tests covering init, use, browser detection, language filtering, localStorage persistence, and instant delegation ([PR #162](https://github.com/PGAN-Dev/PoracleWeb.NET/pull/162))
+- **MkDocs i18n documentation**: Feature page at `docs/features/internationalization.md` covering architecture, translation file structure, admin config, and contributing translations ([PR #162](https://github.com/PGAN-Dev/PoracleWeb.NET/pull/162))
+- **MkDocs landing page**: Custom home page with hero section, feature cards, screenshot gallery, quick start, and language flags banner ([PR #162](https://github.com/PGAN-Dev/PoracleWeb.NET/pull/162))
+
 ## [2.3.0] - 2026-04-08
 
 ## [2.3.0] - 2026-04-08
