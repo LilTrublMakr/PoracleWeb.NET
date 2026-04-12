@@ -1,0 +1,110 @@
+version: 2
+updates:
+  # .NET (backend)
+  - package-ecosystem: nuget
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: '06:00'
+      timezone: Etc/UTC
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+    commit-message:
+      prefix: deps
+    groups:
+      microsoft:
+        patterns:
+          - 'Microsoft.*'
+          - 'System.*'
+      aspnetcore:
+        patterns:
+          - 'Microsoft.AspNetCore.*'
+          - 'Microsoft.Extensions.*'
+      ef-core:
+        patterns:
+          - 'Microsoft.EntityFrameworkCore*'
+          - 'MySql.EntityFrameworkCore'
+      test:
+        patterns:
+          - 'xunit*'
+          - 'Moq'
+          - 'coverlet.*'
+          - 'Microsoft.NET.Test.Sdk'
+
+  # Angular frontend
+  - package-ecosystem: npm
+    directory: /Applications/Pgan.PoracleWebNet.App/ClientApp
+    schedule:
+      interval: weekly
+      day: monday
+      time: '06:00'
+      timezone: Etc/UTC
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+    commit-message:
+      prefix: deps
+    ignore:
+      # Angular/Material majors are coordinated upgrades — pin to manual bumps
+      - dependency-name: '@angular/*'
+        update-types: [version-update:semver-major]
+      - dependency-name: '@angular-devkit/*'
+        update-types: [version-update:semver-major]
+      - dependency-name: '@angular/material'
+        update-types: [version-update:semver-major]
+      - dependency-name: '@angular/cdk'
+        update-types: [version-update:semver-major]
+    groups:
+      angular:
+        patterns:
+          - '@angular/*'
+          - '@angular-devkit/*'
+          - '@angular/material'
+          - '@angular/cdk'
+      eslint:
+        patterns:
+          - 'eslint*'
+          - '@typescript-eslint/*'
+          - 'prettier'
+          - 'eslint-config-*'
+          - 'eslint-plugin-*'
+      jest:
+        patterns:
+          - 'jest*'
+          - '@types/jest'
+          - 'jest-preset-angular'
+      types:
+        patterns:
+          - '@types/*'
+
+  # GitHub Actions
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: '06:00'
+      timezone: Etc/UTC
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+      - ci
+    commit-message:
+      prefix: ci
+
+  # Dockerfile base images
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: '06:00'
+      timezone: Etc/UTC
+    open-pull-requests-limit: 3
+    labels:
+      - dependencies
+      - build
+    commit-message:
+      prefix: build

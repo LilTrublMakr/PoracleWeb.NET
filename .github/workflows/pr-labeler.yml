@@ -1,0 +1,85 @@
+name: Auto-label PRs
+
+on:
+  pull_request_target:
+    types: [opened, edited, reopened, synchronize]
+
+permissions:
+  pull-requests: write
+  contents: read
+
+jobs:
+  label:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Apply label from branch prefix or title
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            const branch = pr.head.ref || '';
+            const title = pr.title || '';
+
+            // Map prefix -> label. First match on branch, then title.
+            const map = [
+              [/^feat(ure)?\//i,   'feat'],
+              [/^fix\//i,          'fix'],
+              [/^hotfix\//i,       'fix'],
+              [/^perf\//i,         'perf'],
+              [/^docs?\//i,        'docs'],
+              [/^refactor\//i,     'refactor'],
+              [/^test\//i,         'test'],
+              [/^build\//i,        'build'],
+              [/^ci\//i,           'ci'],
+              [/^chore\//i,        'chore'],
+              [/^breaking\//i,     'breaking'],
+              [/^deps?\//i,        'dependencies'],
+            ];
+            const titleMap = [
+              [/^feat(\(.+\))?!?:/i,     'feat'],
+              [/^fix(\(.+\))?!?:/i,      'fix'],
+              [/^perf(\(.+\))?!?:/i,     'perf'],
+              [/^docs?(\(.+\))?!?:/i,    'docs'],
+              [/^refactor(\(.+\))?!?:/i, 'refactor'],
+              [/^test(\(.+\))?!?:/i,     'test'],
+              [/^build(\(.+\))?!?:/i,    'build'],
+              [/^ci(\(.+\))?!?:/i,       'ci'],
+              [/^chore(\(.+\))?!?:/i,    'chore'],
+            ];
+
+            const toAdd = new Set();
+            for (const [re, label] of map) if (re.test(branch)) { toAdd.add(label); break; }
+            if (toAdd.size === 0) {
+              for (const [re, label] of titleMap) if (re.test(title)) { toAdd.add(label); break; }
+            }
+            // Breaking-change marker in conventional commit title: "feat!:" or "fix(scope)!:"
+            if (/^[a-z]+(\(.+\))?!:/i.test(title)) toAdd.add('breaking');
+
+            if (toAdd.size === 0) {
+              console.log(`No prefix matched for branch "${branch}" / title "${title}" — leaving unlabeled`);
+              return;
+            }
+
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+
+            // Make sure labels exist (create if missing, idempotent).
+            const colors = {
+              feat: '0E8A16', fix: 'D73A4A', perf: 'FBCA04', docs: '0075CA',
+              refactor: 'C5DEF5', test: 'BFD4F2', build: '1D76DB', ci: '1D76DB',
+              chore: 'CCCCCC', breaking: 'B60205', dependencies: '0366D6',
+            };
+            for (const label of toAdd) {
+              try {
+                await github.rest.issues.getLabel({ owner, repo, name: label });
+              } catch {
+                await github.rest.issues.createLabel({
+                  owner, repo, name: label, color: colors[label] || 'EDEDED',
+                });
+              }
+            }
+
+            await github.rest.issues.addLabels({
+              owner, repo, issue_number: pr.number, labels: [...toAdd],
+            });
+            console.log(`Applied labels: ${[...toAdd].join(', ')}`);

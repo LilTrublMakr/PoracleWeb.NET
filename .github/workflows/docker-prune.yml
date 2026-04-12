@@ -1,0 +1,71 @@
+name: Prune Old Docker Images
+
+on:
+  schedule:
+    - cron: '0 3 * * *' # 03:00 UTC daily
+  workflow_dispatch:
+
+env:
+  ORG: pgan-dev
+  PACKAGE: poracleweb.net
+  REPO: PoracleWeb.NET
+
+jobs:
+  prune-pr-images:
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+      pull-requests: read
+    steps:
+      - name: Delete pr-* tags for closed PRs
+        uses: actions/github-script@v7
+        env:
+          ORG: ${{ env.ORG }}
+          PACKAGE: ${{ env.PACKAGE }}
+          REPO: ${{ env.REPO }}
+        with:
+          script: |
+            const { ORG, PACKAGE, REPO } = process.env;
+            const { data: versions } = await github.rest.packages.getAllPackageVersionsForPackageOwnedByOrg({
+              package_type: 'container',
+              package_name: PACKAGE,
+              org: ORG,
+              per_page: 100,
+            });
+
+            for (const v of versions) {
+              const tags = v.metadata?.container?.tags ?? [];
+              const prTag = tags.find(t => /^pr-\d+(-|$)/.test(t));
+              if (!prTag) continue;
+              const prNum = parseInt(prTag.match(/^pr-(\d+)/)[1], 10);
+              try {
+                const { data: pr } = await github.rest.pulls.get({
+                  owner: ORG, repo: REPO, pull_number: prNum,
+                });
+                if (pr.state === 'closed') {
+                  console.log(`Deleting ${tags.join(',')} (PR #${prNum} closed)`);
+                  await github.rest.packages.deletePackageVersionForOrg({
+                    package_type: 'container',
+                    package_name: PACKAGE,
+                    org: ORG,
+                    package_version_id: v.id,
+                  });
+                }
+              } catch (e) {
+                console.log(`Skipping ${tags.join(',')}: ${e.message}`);
+              }
+            }
+
+  prune-main-shas:
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+    steps:
+      - name: Keep only last 10 main-<sha> images
+        uses: actions/delete-package-versions@v5
+        with:
+          package-name: poracleweb.net
+          package-type: container
+          owner: pgan-dev
+          min-versions-to-keep: 10
+          ignore-versions: '^(latest|beta|v\\d+\\.\\d+.*|pr-.*)$'

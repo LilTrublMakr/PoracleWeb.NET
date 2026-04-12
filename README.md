@@ -78,10 +78,42 @@ cd Applications/Pgan.PoracleWebNet.App/ClientApp && npm test  # Frontend
 
 See the [Development Setup guide](https://pgan-dev.github.io/PoracleWeb.NET/getting-started/development-setup/) for full instructions.
 
+## Branch Naming
+
+Use conventional prefixes so PRs are auto-labeled and release notes group correctly:
+
+| Prefix | Example | Release-note section |
+|---|---|---|
+| `feat/` | `feat/test-alerts` | Features |
+| `fix/` | `fix/jwt-desync` | Bug Fixes |
+| `perf/` | `perf/dashboard-counts` | Performance |
+| `docs/` | `docs/geofence-readme` | Documentation |
+| `refactor/` | `refactor/remove-unitofwork` | Refactors |
+| `test/` | `test/alarm-mappings` | Tests |
+| `build/`, `ci/` | `ci/docker-prune` | Build & CI |
+| `chore/` | `chore/bump-deps` | Chores |
+| `breaking/` | `breaking/v3-api` | Breaking Changes |
+
+Conventional Commit style in the PR title (`feat: ...`, `fix(scope)!: ...`) works too and is preferred for PRs where the branch name can't be controlled (e.g. Dependabot). The `!` marker promotes the PR into the Breaking Changes section.
+
+## Release Channels
+
+Three Docker channels are published to GHCR — see [TESTING.md](TESTING.md) for details.
+
+| Channel | Tag | Trigger |
+|---|---|---|
+| Stable | `:latest`, `:vX.Y.Z` | Release tag |
+| Beta | `:beta`, `:main-<sha>` | Every push to `main` |
+| PR preview | `:pr-<number>` | PRs with the `preview` label |
+
 ## CI/CD
 
 - **ci.yml** — Builds backend, runs tests, builds frontend, runs lint/prettier/jest
-- **docker-publish.yml** — Builds and publishes Docker image to [`ghcr.io/pgan-dev/poracleweb.net`](https://github.com/PGAN-Dev/PoracleWeb.NET/pkgs/container/poracleweb.net)
+- **docker-publish.yml** — Builds and publishes Docker image to [`ghcr.io/pgan-dev/poracleweb.net`](https://github.com/PGAN-Dev/PoracleWeb.NET/pkgs/container/poracleweb.net) (`:latest` on release, `:beta` on main)
+- **docker-preview.yml** — Builds `:pr-<number>` images on PRs labeled `preview`
+- **docker-prune.yml** — Nightly cleanup of stale `pr-*` and `main-<sha>` tags
+- **pr-labeler.yml** — Auto-labels PRs from branch prefix / PR title for release-note grouping
+- **release.yml** (config) — Groups PRs by label when generating GitHub release notes
 
 ## Credits
 
