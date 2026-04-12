@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- bump the angular group across 1 directory with 13 updates ([PR #189](https://github.com/PGAN-Dev/PoracleWeb.NET/pull/189))
+
 ### Added
 - **Three-channel Docker release process**: introduced `:beta` (published on every push to `main`) and `:pr-<number>` (published on PRs labeled `preview`) image tags alongside the existing `:latest` / semver stable tags. Enables public testers to opt into pre-release builds before an official release is cut. Includes a nightly prune workflow that removes `pr-*` tags for closed PRs and keeps only the last 10 `main-<sha>` builds. See `TESTING.md` for the user-facing guide.
 - **Automated PR labeling and release-notes generation**: new `pr-labeler.yml` workflow applies conventional labels (`feat`, `fix`, `perf`, `docs`, `refactor`, `test`, `build`, `ci`, `chore`, `breaking`) based on branch prefix (`feat/`, `fix/`, etc.) or PR title (Conventional Commits). `.github/release.yml` groups labeled PRs into sections when using GitHub's "Generate release notes" button on a new release. Branch naming convention documented in README.
