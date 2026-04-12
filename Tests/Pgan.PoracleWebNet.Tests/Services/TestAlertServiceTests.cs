@@ -1,9 +1,12 @@
 using System.Text.Json;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Pgan.PoracleWebNet.Core.Abstractions.Services;
 using Pgan.PoracleWebNet.Core.Models;
 using Pgan.PoracleWebNet.Core.Services;
+using Pgan.PoracleWebNet.Core.Services.Pvp;
+using Pgan.PoracleWebNet.Core.Services.TestAlerts;
 
 namespace Pgan.PoracleWebNet.Tests.Services;
 
@@ -17,14 +20,31 @@ public class TestAlertServiceTests
     private readonly Mock<IPoracleApiProxy> _apiProxy = new();
     private readonly Mock<IPoracleTrackingProxy> _trackingProxy = new();
     private readonly Mock<IPoracleHumanProxy> _humanProxy = new();
+    private readonly Mock<IMasterDataService> _masterData = new();
     private readonly Mock<ILogger<TestAlertService>> _logger = new();
     private readonly TestAlertService _sut;
 
-    public TestAlertServiceTests() => this._sut = new TestAlertService(
+    public TestAlertServiceTests()
+    {
+        var cache = new MemoryCache(new MemoryCacheOptions());
+        var pvpService = new PvpRankService(cache);
+        var builders = new ITestPayloadBuilder[]
+        {
+            new PokemonTestPayloadBuilder(pvpService, this._masterData.Object),
+            new RaidOrEggTestPayloadBuilder(),
+            new QuestTestPayloadBuilder(),
+            new PokestopTestPayloadBuilder(),
+            new NestTestPayloadBuilder(),
+            new GymTestPayloadBuilder(),
+        };
+
+        this._sut = new TestAlertService(
             this._apiProxy.Object,
             this._trackingProxy.Object,
             this._humanProxy.Object,
+            builders,
             this._logger.Object);
+    }
 
     [Fact]
     public async Task SendTestAlertAsyncValidPokemonSendsRequest()
@@ -93,14 +113,13 @@ public class TestAlertServiceTests
     }
 
     [Theory]
-    [InlineData("raid")]
-    [InlineData("egg")]
-    [InlineData("quest")]
-    [InlineData("invasion")]
-    [InlineData("lure")]
-    [InlineData("nest")]
-    [InlineData("gym")]
-    public async Task SendTestAlertAsyncAllValidTypesSendsRequest(string alarmType)
+    [InlineData("raid", "raid")]
+    [InlineData("egg", "raid")]
+    [InlineData("quest", "quest")]
+    [InlineData("invasion", "pokestop")]
+    [InlineData("lure", "pokestop")]
+    [InlineData("gym", "gym")]
+    public async Task SendTestAlertAsyncAllValidTypesSendsRequest(string alarmType, string expectedWireType)
     {
         var alarms = CreateJsonArray(new
         {
@@ -122,7 +141,7 @@ public class TestAlertServiceTests
         await this._sut.SendTestAlertAsync("user1", alarmType, 10);
 
         this._apiProxy.Verify(p => p.SendTestAlertAsync(It.Is<TestAlertRequest>(r =>
-            r.Type == alarmType
+            r.Type == expectedWireType
         )), Times.Once);
     }
 
@@ -136,6 +155,33 @@ public class TestAlertServiceTests
             this._sut.SendTestAlertAsync("user1", invalidType, 1));
 
         this._trackingProxy.Verify(p => p.GetByUserAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+        this._apiProxy.Verify(p => p.SendTestAlertAsync(It.IsAny<TestAlertRequest>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task SendTestAlertAsyncNestThrowsNotSupportedException()
+    {
+        // Nest alarms are a valid UI type but PoracleNG's /api/test endpoint has no nest
+        // surface — the builder throws NotSupportedException which the controller maps to
+        // HTTP 501. Regression guard against reviving the best-effort nest payload.
+        var alarms = CreateJsonArray(new
+        {
+            uid = 10,
+            pokemon_id = 246
+        });
+        this._trackingProxy.Setup(p => p.GetByUserAsync("nest", "user1")).ReturnsAsync(alarms);
+
+        var human = CreateJsonElement(new
+        {
+            id = "user1",
+            name = "TestUser",
+            type = "discord:user"
+        });
+        this._humanProxy.Setup(p => p.GetHumanAsync("user1")).ReturnsAsync(human);
+
+        await Assert.ThrowsAsync<NotSupportedException>(() =>
+            this._sut.SendTestAlertAsync("user1", "nest", 10));
+
         this._apiProxy.Verify(p => p.SendTestAlertAsync(It.IsAny<TestAlertRequest>()), Times.Never);
     }
 
