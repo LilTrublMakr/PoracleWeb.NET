@@ -497,13 +497,41 @@ public partial class QuickPickService(
 
     // --- Invasion ---
 
+    // Fan-out targets for the "invasion-leader" quick pick — three distinct grunt_type
+    // values in PoracleNG. A single filter dict can only set one gruntType, so we create
+    // one alarm per leader rather than complicating the QuickPick schema. Giovanni is
+    // deliberately excluded (separate `invasion-giovanni` pick, since he spawns from the
+    // Super Rocket Radar only).
+    private static readonly string[] LeaderFanOutGruntTypes = ["cliff", "arlo", "sierra"];
+
     private async Task<List<int>> ApplyInvasionAsync(
         string userId, int profileNo, QuickPickDefinition definition, QuickPickApplyRequest request)
     {
-        var json = JsonSerializer.Serialize(definition.Filters, JsonOptions);
+        if (definition.Id == "invasion-leader")
+        {
+            var invasions = LeaderFanOutGruntTypes.Select(gt => BuildInvasion(definition.Filters, profileNo, request, gt)).ToList();
+            var created = await this._invasionService.BulkCreateAsync(userId, invasions);
+            return [.. created.Select(i => i.Uid)];
+        }
+
+        var invasion = BuildInvasion(definition.Filters, profileNo, request, null);
+        var singleCreated = await this._invasionService.CreateAsync(userId, invasion);
+        return [singleCreated.Uid];
+    }
+
+    private static Invasion BuildInvasion(
+        Dictionary<string, object?> filters, int profileNo, QuickPickApplyRequest request, string? gruntTypeOverride)
+    {
+        var json = JsonSerializer.Serialize(filters, JsonOptions);
         var invasion = JsonSerializer.Deserialize<Invasion>(json, JsonOptions) ?? new Invasion();
 
         invasion.ProfileNo = profileNo;
+
+        if (gruntTypeOverride != null)
+        {
+            invasion.GruntType = gruntTypeOverride;
+        }
+
         invasion.GruntType ??= "";
 
         if (request.Distance.HasValue)
@@ -521,8 +549,7 @@ public partial class QuickPickService(
             invasion.Template = request.Template;
         }
 
-        var created = await this._invasionService.CreateAsync(userId, invasion);
-        return [created.Uid];
+        return invasion;
     }
 
     // --- Lure ---
@@ -799,7 +826,8 @@ public partial class QuickPickService(
 
         // ── Invasions ──
         new() { Id = "all-invasions", Name = "All Invasions", Description = "Track all Team Rocket grunt and leader invasions", Icon = "warning", Category = "Invasions", AlarmType = "invasion", SortOrder = 50, Filters = [] },
-        new() { Id = "invasion-leader", Name = "Rocket Leaders", Description = "Track Sierra, Cliff, and Arlo encounters", Icon = "supervisor_account", Category = "Invasions", AlarmType = "invasion", SortOrder = 51, Filters = new() { ["gruntType"] = "mixed" } },
+        new() { Id = "invasion-leader", Name = "Rocket Leaders", Description = "Track Sierra, Cliff, and Arlo encounters", Icon = "supervisor_account", Category = "Invasions", AlarmType = "invasion", SortOrder = 51, Filters = [] },
+        new() { Id = "invasion-giovanni", Name = "Giovanni", Description = "Track Giovanni boss encounters", Icon = "military_tech", Category = "Invasions", AlarmType = "invasion", SortOrder = 52, Filters = new() { ["gruntType"] = "giovanni" } },
 
         // ── Lures ──
         new() { Id = "lure-glacial", Name = "Glacial Lures", Description = "Track Glacial Lure Modules at PokeStops", Icon = "ac_unit", Category = "Lures", AlarmType = "lure", SortOrder = 60, Filters = new() { ["lureId"] = 502 } },

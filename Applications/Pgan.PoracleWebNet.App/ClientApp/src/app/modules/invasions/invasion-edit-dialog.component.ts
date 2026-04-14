@@ -12,7 +12,7 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTabsModule } from '@angular/material/tabs';
 import { TranslateModule } from '@ngx-translate/core';
 
-import { EVENT_TYPE_INFO, getDisplayName, getGruntIconUrl, isEventType } from './invasion.constants';
+import { EVENT_TYPE_INFO, getDisplayName, getGruntIconUrl, isEventType, isGenderFixed } from './invasion.constants';
 import { Invasion, InvasionUpdate } from '../../core/models';
 import { AuthService } from '../../core/services/auth.service';
 import { I18nService } from '../../core/services/i18n.service';
@@ -60,13 +60,14 @@ export class InvasionEditDialogComponent {
     template: [this.data.template ?? ''],
   });
 
+  readonly hideGender = isGenderFixed(this.data.gruntType);
   readonly isEvent = isEventType(this.data.gruntType);
   readonly isWebhook = inject(AuthService).isImpersonating();
 
   saving = signal(false);
 
   getDisplayName(): string {
-    return getDisplayName(this.data.gruntType) || this.i18n.instant('INVASIONS.UNKNOWN_GRUNT');
+    return getDisplayName(this.data.gruntType, this.data.gender) || this.i18n.instant('INVASIONS.UNKNOWN_GRUNT');
   }
 
   getEventColor(): string {
@@ -93,7 +94,7 @@ export class InvasionEditDialogComponent {
   }
 
   getGruntIcon(): string {
-    return getGruntIconUrl(this.data.gruntType);
+    return getGruntIconUrl(this.data.gruntType, this.data.gender);
   }
 
   onDistanceModeChange(): void {
@@ -109,7 +110,10 @@ export class InvasionEditDialogComponent {
       .update(this.data.uid, {
         clean: v.clean ? 1 : 0,
         distance: dist,
-        gender: this.isEvent ? 0 : (v.gender ?? 0),
+        // Preserve the stored gender when the dropdown is hidden — a Mixed Male alarm
+        // (gender=1) must stay at 1 across edits; zeroing it would widen the filter to
+        // also match female Mixed grunts.
+        gender: this.hideGender ? (this.data.gender ?? 0) : (v.gender ?? 0),
         gruntType: this.data.gruntType ?? '',
         ping: v.ping || null,
         template: v.template || null,

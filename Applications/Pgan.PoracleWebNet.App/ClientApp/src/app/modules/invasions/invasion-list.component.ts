@@ -14,7 +14,13 @@ import { firstValueFrom } from 'rxjs';
 
 import { InvasionAddDialogComponent } from './invasion-add-dialog.component';
 import { InvasionEditDialogComponent } from './invasion-edit-dialog.component';
-import { EVENT_TYPE_INFO, getDisplayName as displayName, getGruntIconUrl, isEventType as checkEventType } from './invasion.constants';
+import {
+  EVENT_TYPE_INFO,
+  getDisplayName as displayName,
+  getGruntIconUrl,
+  isEventType as checkEventType,
+  isGenderFixed as checkGenderFixed,
+} from './invasion.constants';
 import { Invasion } from '../../core/models';
 import { I18nService } from '../../core/services/i18n.service';
 import { InvasionService } from '../../core/services/invasion.service';
@@ -122,7 +128,7 @@ export class InvasionListComponent implements OnInit {
         data: {
           confirmText: this.i18n.instant('COMMON.DELETE'),
           message: this.i18n.instant('INVASIONS.CONFIRM_DELETE_MSG', {
-            name: invasion.gruntType || this.i18n.instant('INVASIONS.UNKNOWN_GRUNT'),
+            name: displayName(invasion.gruntType, invasion.gender) || this.i18n.instant('INVASIONS.UNKNOWN_GRUNT'),
           }),
           title: this.i18n.instant('INVASIONS.CONFIRM_DELETE_TITLE'),
           warn: true,
@@ -164,8 +170,8 @@ export class InvasionListComponent implements OnInit {
     return info ? info.color : null;
   }
 
-  getDisplayName(gruntType: string | null): string {
-    return displayName(gruntType);
+  getDisplayName(gruntType: string | null, gender?: number): string {
+    return displayName(gruntType, gender);
   }
 
   getEventColor(gruntType: string | null): string {
@@ -180,8 +186,12 @@ export class InvasionListComponent implements OnInit {
     return EVENT_TYPE_INFO[gruntType ?? '']?.imgUrl ?? '';
   }
 
-  getGruntIcon(gruntType: string | null): string {
-    return getGruntIconUrl(gruntType);
+  getGruntIcon(gruntType: string | null, gender?: number): string {
+    return getGruntIconUrl(gruntType, gender);
+  }
+
+  hideGenderLabel(gruntType: string | null): boolean {
+    return checkGenderFixed(gruntType);
   }
 
   isEventType(gruntType: string | null): boolean {
