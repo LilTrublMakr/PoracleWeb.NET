@@ -31,7 +31,7 @@ jobs:
         #  - any grouped bundle (groups are curated; CI gates)
         #  - GitHub Actions minor bumps
         # Majors and runtime-dep minors wait for human review.
-        if: |
+        if: >-
           github.actor == 'dependabot[bot]' && (
             steps.meta.outputs.update-type == 'version-update:semver-patch' ||
             steps.meta.outputs.dependency-group != '' ||
@@ -44,12 +44,13 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Approve on behalf of repo
-        if: |
+        if: >-
           github.actor == 'dependabot[bot]' && (
             steps.meta.outputs.update-type == 'version-update:semver-patch' ||
             steps.meta.outputs.dependency-group != ''
           )
-        run: gh pr review --approve "$PR_URL" --body "Auto-approved: low-risk bump, gated on CI."
+        run: |
+          gh pr review --approve "$PR_URL" --body "Auto-approved: low-risk bump, gated on CI."
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
