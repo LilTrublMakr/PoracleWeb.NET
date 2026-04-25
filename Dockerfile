@@ -1,5 +1,7 @@
 # Stage 1: Build Angular SPA
-FROM node:22-alpine AS angular-build
+# Pin to amd64 — Angular output is architecture-independent static assets,
+# so we avoid running npm under slow QEMU emulation on arm64 builds.
+FROM --platform=linux/amd64 node:22-alpine AS angular-build
 WORKDIR /app/angular
 COPY Applications/Pgan.PoracleWebNet.App/ClientApp/package*.json ./
 RUN npm ci
